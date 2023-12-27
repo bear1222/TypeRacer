@@ -32,18 +32,18 @@ module vga(
     output vsync
 );
     ////////////////////////
-    wire [124:0] type;
-    assign type = /*{105'd0, 5'd3, 5'd2, 5'd1, 5'd0}*/ 3;
+//    wire [124:0] type;
+//    assign type = {105'd0, 5'd3, 5'd3, 5'd3, 5'd3};
     /////
-//    clock_divider #(20) cd2(
-//        .clk(clk), 
-//        .clk_div(clk2)
-//    );
-//    reg [124:0] type;
-//    always @ (posedge rst or posedge clk2) begin
-//        if(rst) type <= 0;
-//        else type <= type + 1;
-//    end
+    clock_divider #(20) cd2(
+        .clk(clk), 
+        .clk_div(clk2)
+    );
+    reg [124:0] type;
+    always @ (posedge rst or posedge clk2) begin
+        if(rst) type <= 0;
+        else type <= type + 1;
+    end
     ////////////////////////
 
 
@@ -70,7 +70,7 @@ module vga(
 
     wire [11:0] pixel_type;
     text_display type_in(
-        .clk(clk_25MHz), 
+        .clk(clk), 
         .valid(valid), 
         .vgax(vgax), 
         .vgay(vgay), 
