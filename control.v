@@ -12,13 +12,34 @@ module control(
 	output wire [6:0] value,
 	output reg [1:0] state,
 	output reg [15:0] nums
-);
+);	
+	reg [9:0] cnt, next_cnt;
 	reg [6:0] Num, Time, next_Num, next_Time;
 	reg [1:0] next_state;
 	reg Mode, next_Mode;
+	wire clk_div;
 	parameter SELECT = 0;
-	parameter INGAME = 1;
-	parameter FINISH = 2;
+	parameter COUNTDOWN = 1;
+	parameter INGAME = 2;
+	parameter FINISH = 3;
+
+	always @ (posedge clk_div, posedge rst) begin
+    	if (rst) begin
+    		cnt <= 30;
+    	end else begin
+			cnt <= next_cnt;
+    	end
+    end
+
+	always @(*) begin
+		if(state == COUNTDOWN)begin
+			next_cnt = (cnt) ? cnt - 1 : 0;
+		end else if(state == SELECT)begin
+			next_cnt = 30;
+		end else begin
+			next_cnt = cnt;
+		end
+	end
 
 	always @ (posedge clk, posedge rst) begin
     	if (rst) begin
@@ -31,9 +52,13 @@ module control(
 	always @(*) begin
 		case (state)
 			SELECT: begin
-				if(start) next_state = INGAME;
+				if(start) next_state = COUNTDOWN;
 				else next_state = SELECT;
 			end 
+			COUNTDOWN: begin
+				if(cnt == 0) next_state = INGAME;
+				else next_state = COUNTDOWN;
+			end
 			INGAME: begin
 				if(finish) next_state = FINISH;
 				else next_state = INGAME;

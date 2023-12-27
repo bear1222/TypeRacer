@@ -26,8 +26,7 @@ module TOP(
 	wire [1:0] state;
 	wire [4:0] vol;
 	wire [15:0] nums;
-//	wire [124:0] type;
-	reg [124:0] type;
+	wire [124:0] type;
 	wire [7:0] wpm;
 	wire [6:0] acc;
 	wire [24:0] correct;
@@ -93,7 +92,8 @@ module TOP(
 
 	dictionary dic(
 		.id(id),
-		.word(word)
+		.word(word),
+		.wordnum(wordnum)
 	);//
 
 	audio a(
