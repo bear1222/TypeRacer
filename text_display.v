@@ -10,7 +10,7 @@ module text_display(
     wire [7:0] data;
     ascii_rom rom(.clk(clk), .addr(addr), .data(data));
 
-    wire [7:0] id;
+    wire [9:0] id;
     wire [6:0] ascii;
     wire [3:0] char_row;
     wire [2:0] char_bit;
