@@ -19,11 +19,12 @@ endmodule
 module vga(
     input clk, 
     input rst, 
+    input [4:0] tot,
     input [6:0] wpm, 
     input [7:0] acc, 
     input [24:0] correct, 
     input times, 
-//    input [124:0] type, // array
+    input [124:0] type, // array
     input [59:0] rd, // array
     output [3:0] vgaRed,
     output [3:0] vgaGreen,
@@ -35,7 +36,7 @@ module vga(
 //    wire [124:0] type;
 //    assign type = {105'd0, 5'd3, 5'd3, 5'd3, 5'd3};
     /////
-    clock_divider #(20) cd2(
+/*    clock_divider #(20) cd2(
         .clk(clk), 
         .clk_div(clk2)
     );
@@ -43,7 +44,7 @@ module vga(
     always @ (posedge rst or posedge clk2) begin
         if(rst) type <= 0;
         else type <= type + 1;
-    end
+    end*/
     ////////////////////////
 
 

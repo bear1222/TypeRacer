@@ -105,11 +105,11 @@ module count(
     end
 
 	always @(*) begin
-		if(state == INGAME && mode == 1)begin
+		if(state == INGAME/* && mode == 1*/)begin
 			if(cursor && key_num == 28 && key_valid && key_down[last_change] == 1'b1 && !delay && !(key_down & (~(1 << last_change))))begin//space down ?
 				next_num = num + 1;
-			end else if(state == SELECT)begin
-				next_num = 0;
+			end else begin
+				next_num = num;
 			end
 		end else begin
 			next_num = 0;
@@ -277,6 +277,8 @@ module count(
 				end else begin
 					next_cursor = cursor;
 				end
+			end else begin
+				next_cursor = cursor;
 			end
 		end else begin
 			next_cursor = 0;
