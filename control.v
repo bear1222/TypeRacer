@@ -8,6 +8,7 @@ module control(
 	input vol_DOWN,//BntU
 	input mode,//sw0
 	input finish,
+	output reg Mode,
 	output [4:0] vol,
 	output wire [6:0] value,
 	output reg [1:0] state,
@@ -16,16 +17,18 @@ module control(
 	reg [9:0] cnt, next_cnt;
 	reg [6:0] Num, Time, next_Num, next_Time;
 	reg [1:0] next_state;
-	reg Mode, next_Mode;
+	reg next_Mode;
 	wire clk_div;
 	parameter SELECT = 0;
 	parameter COUNTDOWN = 1;
 	parameter INGAME = 2;
 	parameter FINISH = 3;
 
+	looHz_counter ct (.clk(clk), .clk_div(clk_div));
+
 	always @ (posedge clk_div, posedge rst) begin
     	if (rst) begin
-    		cnt <= 30;
+    		cnt <= 300;
     	end else begin
 			cnt <= next_cnt;
     	end
@@ -35,7 +38,7 @@ module control(
 		if(state == COUNTDOWN)begin
 			next_cnt = (cnt) ? cnt - 1 : 0;
 		end else if(state == SELECT)begin
-			next_cnt = 30;
+			next_cnt = 300;
 		end else begin
 			next_cnt = cnt;
 		end
@@ -63,7 +66,7 @@ module control(
 				if(finish) next_state = FINISH;
 				else next_state = INGAME;
 			end 
-			SELECT: begin
+			FINISH: begin
 				if(start) next_state = SELECT;
 				else next_state = FINISH;
 			end 
@@ -101,9 +104,9 @@ module control(
 		if(state == SELECT)begin
 			if(mode)begin
 				if(select_UP)begin
-					next_Num = (Num == 100) ? (Num + 25) : 25;
+					next_Num = (Num == 100) ? 25 : (Num + 25);
 				end else if(select_DOWN)begin
-					next_Num = (Num == 25) ? (Num - 25) : 100;
+					next_Num = (Num == 25) ? 100 : (Num - 25);
 				end else begin
 					next_Num = Num;
 				end
@@ -127,9 +130,9 @@ module control(
 		if(state == SELECT)begin
 			if(!mode)begin
 				if(select_UP)begin
-					next_Time = (Time == 90) ? (Time + 15) : 15;
+					next_Time = (Time == 90) ? 15 : (Time + 15);
 				end else if(select_DOWN)begin
-					next_Time = (Time == 15) ? (Time - 15) : 90;
+					next_Time = (Time == 15) ? 90 : (Time - 15);
 				end else begin
 					next_Time = Time;
 				end
@@ -143,7 +146,7 @@ module control(
 
 	always @(*) begin
 		if(state == SELECT)begin
-			if(!mode)begin
+			if(!Mode)begin
 				nums[3:0] = Time % 10;
 				nums[7:4] = (Time / 10) % 10; 
 				nums[11:8] = 0;
@@ -153,6 +156,18 @@ module control(
 				nums[7:4] = (Num / 10) % 10; 
 				nums[11:8] = Num / 100;
 				nums[15:12] = 11;//
+			end
+		end else if(state == INGAME)begin
+			if(!Mode)begin
+				nums[3:0] = Time % 10;
+				nums[7:4] = (Time / 10) % 10; 
+				nums[11:8] = 0;
+				nums[15:12] = 0;//
+			end else begin
+				nums[3:0] = Num % 10;
+				nums[7:4] = (Num / 10) % 10; 
+				nums[11:8] = Num / 100;
+				nums[15:12] = 0;//
 			end
 		end else begin
 			nums[3:0] = 12;

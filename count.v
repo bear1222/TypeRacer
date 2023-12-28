@@ -8,12 +8,15 @@ module count(
 	input [8:0] last_change,
 	input key_valid,
 	input [9:0] random_id,
+	output reg [15:0] nums,
+	output reg [4:0] cursor,
 	output reg [124:0] type,
 	output reg [7:0] wpm,
 	output reg [6:0] acc,
 	output reg [4:0] correct,
 	output reg finish,
 	output reg [59:0] RD
+	
 );	
 	parameter SELECT = 0;
 	parameter COUNTDOWN = 1;
@@ -32,7 +35,7 @@ module count(
 	parameter BACK = 7'd102;
 	parameter SPACE = 7'd41;
 
-	reg [4:0] id;
+	reg [6:0] id;
 	wire [74:0] word;
 	wire [4:0] wordnum;
 	
@@ -45,15 +48,17 @@ module count(
 	reg next_finish;
 	reg [59:0] next_RD;
 	reg [2:0] RD_poniter, next_RD_pointer;
-	reg [10:0] timer, next_timer;//max = 2047
-	reg [9:0] cnt, next_cnt;
+	reg [14:0] timer, next_timer;//max = 2047
+	reg [14:0] cnt, next_cnt;
 	reg [6:0] num, next_num;
 	reg [4:0] typecount;
 	reg [124:0] next_type;
-	reg [4:0] cursor, next_cursor;
+	reg [4:0] next_cursor;
 	reg [4:0] next_correct;
 	reg [4:0] key_num;
 	wire clk_div;
+
+	looHz_counter ct (.clk(clk), .clk_div(clk_div));
 
 	/*time*/always @ (posedge clk_div, posedge rst) begin
     	if (rst) begin
@@ -65,7 +70,7 @@ module count(
 
 	always @(*) begin
 		if(state == INGAME)begin
-			next_timer = (timer < 1800) ? timer + 1 : 1800;
+			next_timer = (timer < 18000) ? timer + 1 : 18000;
 		end else if(state == SELECT)begin
 			next_timer = 0;
 		end else begin
@@ -75,7 +80,7 @@ module count(
 
     /*time*/always @ (posedge clk_div, posedge rst) begin
     	if (rst) begin
-    		cnt <= 150;
+    		cnt <= 1500;
     	end else begin
 			cnt <= next_cnt;
     	end
@@ -85,7 +90,7 @@ module count(
 		if(state == INGAME && mode == 0)begin
 			next_cnt = (cnt) ? cnt - 1 : 0;
 		end else if(state == SELECT && mode == 0)begin
-			next_cnt = value;
+			next_cnt = value * 100;
 		end else begin
 			next_cnt = cnt;
 		end
@@ -101,12 +106,13 @@ module count(
 
 	always @(*) begin
 		if(state == INGAME && mode == 1)begin
-			if(last_change == SPACE && 1)//space down ?
+			if(cursor && key_num == 28 && key_valid && key_down[last_change] == 1'b1 && !delay && !(key_down & (~(1 << last_change))))begin//space down ?
 				next_num = num + 1;
-		end else if(state == SELECT)begin
-			next_num = 0;
+			end else if(state == SELECT)begin
+				next_num = 0;
+			end
 		end else begin
-			next_num = num;
+			next_num = 0;
 		end
 	end
     
@@ -120,7 +126,9 @@ module count(
 
 	always @(*) begin
 		if(state == INGAME)begin
-			if(mode && num == value)//num
+			if(timer == 18000)
+				next_finish = 1;
+			else if(mode && num == value)//num
 				next_finish = 1;
 			else if(!mode && cnt == 0)//time
 				next_finish = 1;
@@ -140,19 +148,23 @@ module count(
     end
 
 	always @(*) begin
-		if(state == INGAME && last_change == SPACE && 1)begin // space down ?
-			next_RD = RD;
-			case (RD_poniter)
-				0:next_RD[59 : 50] = random_id;
-				1:next_RD[9 : 0] = random_id;
-				2:next_RD[19 : 10] = random_id;
-				3:next_RD[29 : 20] = random_id;
-				4:next_RD[39 : 30] = random_id;
-				5:next_RD[49 : 40] = random_id;
-				default: next_RD = RD;
-			endcase
+		if(state == INGAME )begin
+			if(cursor && key_num == 28 && key_valid && key_down[last_change] == 1'b1 && !delay && !(key_down & (~(1 << last_change))))begin // space down ?
+				next_RD = RD;
+				case (RD_poniter)
+					0:next_RD[59 : 50] = random_id;
+					1:next_RD[9 : 0] = random_id;
+					2:next_RD[19 : 10] = random_id;
+					3:next_RD[29 : 20] = random_id;
+					4:next_RD[39 : 30] = random_id;
+					5:next_RD[49 : 40] = random_id;
+					default: next_RD = RD;
+				endcase
+			end else begin
+				next_RD = RD;
+			end
 		end else begin
-			next_RD = RD;
+			next_RD = 0;
 		end
 	end
 
@@ -165,18 +177,22 @@ module count(
     end
 
 	always @(*) begin
-		if(state == INGAME && last_change == SPACE && 1)begin // space down ?
-			next_RD_pointer = (RD_poniter < 5) ? RD_poniter + 1 : 0;
+		if(state == INGAME)begin
+			if(cursor && key_num == 28 && key_valid && key_down[last_change] == 1'b1 && !delay && !(key_down & (~(1 << last_change))))begin // space down ?
+				next_RD_pointer = (RD_poniter < 5) ? RD_poniter + 1 : 0;
+			end else begin
+				next_RD_pointer = RD_poniter;
+			end
 		end else begin
-			next_RD_pointer = RD_poniter;
+			next_RD_pointer = 0;
 		end
 	end
 
-	/*RD*/always @ (posedge clk, posedge rst) begin
+	/*ID*/always @ (posedge clk, posedge rst) begin
     	if (rst) begin
 			id <= 0;
     	end else begin
-			if(state == INGAME)begin // space down ?
+			if(state == INGAME)begin
 				case (RD_poniter)
 					0:id <= RD[9 : 0];
 					1:id <= RD[19 : 10];
@@ -233,7 +249,7 @@ module count(
 				end
 			end
 		end else begin
-			next_type = type;
+			next_type = 0;
 		end
 	end
 
@@ -263,7 +279,7 @@ module count(
 				end
 			end
 		end else begin
-			next_cursor = cursor;
+			next_cursor = 0;
 		end
 	end
 
@@ -297,7 +313,7 @@ module count(
 				next_correct = correct;
 			end
 		end else begin
-			next_correct = correct;
+			next_correct = 0;
 		end
 	end
 
@@ -335,5 +351,25 @@ module count(
 		endcase
 	end
 
+	/*always @(*) begin
+		if(mode)begin
+			nums[3:0] = (timer / 100) % 10;
+			nums[7:4] = (timer / 1000) % 10; 
+			nums[11:8] = timer / 10000;
+			nums[15:12] = 0;//
+		end else begin 
+			nums[3:0] = (cnt / 100) % 10;
+			nums[7:4] = (cnt / 1000) % 10; 
+			nums[11:8] = 0;
+			nums[15:12] = 0;//
+		end	
+	end*/
+
+	always @(*) begin
+		nums[3:0] = cursor % 10;
+		nums[7:4] = cursor / 10; 
+		nums[11:8] = num % 10;
+		nums[15:12] = num / 10;
+	end
 
 endmodule
