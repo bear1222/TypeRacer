@@ -141,12 +141,32 @@ module control(
 		end
 	end
 
-    always @ (posedge clk, posedge rst) begin
+	always @(*) begin
+		if(state == SELECT)begin
+			if(!mode)begin
+				nums[3:0] = Time % 10;
+				nums[7:4] = (Time / 10) % 10; 
+				nums[11:8] = 0;
+				nums[15:12] = 10;//
+			end else begin
+				nums[3:0] = Num % 10;
+				nums[7:4] = (Num / 10) % 10; 
+				nums[11:8] = Num / 100;
+				nums[15:12] = 11;//
+			end
+		end else begin
+			nums[3:0] = 12;
+			nums[7:4] = 12; 
+			nums[11:8] = 12;
+			nums[15:12] = 12;//
+		end
+	end
+    /*always @ (posedge clk, posedge rst) begin
     	if (rst) begin
     		
     	end else begin
     		
     	end
-    end
+    end*/
 
 endmodule

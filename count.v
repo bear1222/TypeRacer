@@ -11,7 +11,7 @@ module count(
 	output reg [124:0] type,
 	output reg [7:0] wpm,
 	output reg [6:0] acc,
-	output reg [24:0] correct,
+	output reg [4:0] correct,
 	output reg finish,
 	output reg [59:0] RD
 );	
@@ -51,7 +51,7 @@ module count(
 	reg [4:0] typecount;
 	reg [124:0] next_type;
 	reg [4:0] cursor, next_cursor;
-	reg [24:0] next_correct;
+	reg [4:0] next_correct;
 	reg [4:0] key_num;
 	wire clk_div;
 
@@ -267,6 +267,7 @@ module count(
 		end
 	end
 
+	reg [4:0] i;
 	/*correct*/always @ (posedge clk, posedge rst) begin
     	if (rst) begin
 			correct <= 0;
@@ -277,39 +278,20 @@ module count(
 
 	always @(*) begin
 		if(state == INGAME)begin 
-			if(key_num == 28 && key_valid && key_down[last_change] == 1'b1 && !delay && !(key_down & (~(1 << last_change))))begin//space 
+			if(cursor)begin
 				next_correct = 0;
-			end else if(key_num == 27 && key_valid && key_down[last_change] == 1'b1 && !(key_down & (~(1 << last_change))))begin//back
-				next_correct = correct;
-				if(cursor)begin
-					next_correct[cursor - 1] = 0;
-				end else begin
-					next_correct = correct;
-				end
-			end else if(key_num < 27 && key_valid && key_down[last_change] == 1'b1 && !delay && !(key_down & (~(1 << last_change))))begin
-				if(cursor < 25)begin
-					if(cursor)begin
-						next_correct = correct;
-						if(cursor <= wordnum)begin
-							if(
-								type[cursor * 5 - 5] == word[cursor * 5 - 5] && 
-								type[cursor * 5 - 5 + 1] == word[cursor * 5 - 5 + 1] &&
-								type[cursor * 5 - 5 + 2] == word[cursor * 5 - 5 + 2] && 
-								type[cursor * 5 - 5 + 3] == word[cursor * 5 - 5 + 3] && 
-								type[cursor * 5 - 5 + 4] == word[cursor * 5 - 5 + 4]  
-							)begin
-								next_correct[cursor - 1] = 1;
-							end else begin
-								next_correct[cursor - 1] = 0;
-							end
-						end else begin
-							next_correct[cursor - 1] = 0;
-						end
+				for(i = 0; i < cursor; i = i + 1)begin
+					if(
+						type[i * 5 - 5] == word[i * 5 - 5] && 
+						type[i * 5 - 5 + 1] == word[i * 5 - 5 + 1] &&
+						type[i * 5 - 5 + 2] == word[i * 5 - 5 + 2] && 
+						type[i * 5 - 5 + 3] == word[i * 5 - 5 + 3] && 
+						type[i * 5 - 5 + 4] == word[i * 5 - 5 + 4]  
+					)begin
+						next_correct = next_correct + 1;
 					end else begin
-						next_correct = correct;
+						next_correct = next_correct;
 					end
-				end else begin
-					next_correct = correct;
 				end
 			end else begin
 				next_correct = correct;
