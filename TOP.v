@@ -37,6 +37,7 @@ module TOP(
 	wire finish;
 	wire [4:0] id;//
 	wire [74:0] word;
+	wire [14:0] timer;
 	
 	wire key_valid;
 	wire [7:0] last_change;
@@ -88,6 +89,7 @@ module TOP(
 		.last_change(last_change),
 		.key_valid(key_valid),
 		.nums(num2),
+		.timer(timer),
 		.cursor(cursor),
 		.random_id(random_id),
 		.type(type),
@@ -115,7 +117,7 @@ module TOP(
 		.acc(acc),
 		.tot(cursor), 
 		.correct(correct), 
-		.times(), 
+		.times(timer), 
 		.type(type), 
 		.rd(RD), 
 		.vgaRed(vgaRed), 
