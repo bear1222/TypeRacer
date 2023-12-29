@@ -20,10 +20,10 @@ module vga(
     input clk, 
     input rst, 
     input [4:0] tot,
-    input [6:0] wpm, 
-    input [7:0] acc, 
+    input [9:0] wpm, 
+    input [9:0] acc, 
     input [24:0] correct, 
-    input times, 
+    input [14:0] times, 
     input [124:0] type, // array
     input [59:0] rd, // array
     output [3:0] vgaRed,

@@ -30,8 +30,8 @@ module TOP(
 	wire [9:0] random_id;
 	wire [4:0] cursor;
 	wire [124:0] type;
-	wire [7:0] wpm;
-	wire [6:0] acc;
+	wire [9:0] wpm;
+	wire [9:0] acc;
 	wire [4:0] correct;
 	wire [59:0] RD;
 	wire finish;
