@@ -21,9 +21,9 @@ endmodule
 module vga(
     input clk, 
     input rst, 
-    input [6:0] wpm, 
-    input [7:0] acc, 
-    input [5:0] correct, tot,
+    input [9:0] wpm, 
+    input [9:0] acc, 
+    input [4:0] correct, tot,
     input times, 
     input [124:0] type, // array
     input [59:0] rd, // array
