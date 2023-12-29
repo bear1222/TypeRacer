@@ -146,9 +146,13 @@ module count(
 		end
 	end
 
+	reg [9:0] cnt_random;
+	always @ (posedge clk) cnt_random <= cnt_random + 1;
+
 	/*RD*/always @ (posedge clk, posedge rst) begin
     	if (rst) begin
-			RD <= 0;
+			RD <= {cnt_random + 1, (cnt_random ^ value) + 1, cnt_random + value + 1, cnt_random - value + 1, ~cnt_random + 1};
+//			RD <= {10'd1, 10'd2, 10'd3, 10'd4, 10'd5};
     	end else begin
 			RD <= next_RD;
     	end
@@ -157,16 +161,7 @@ module count(
 	always @(*) begin
 		if(state == INGAME )begin
 			if(cursor && key_num == 28 && key_valid && key_down[last_change] == 1'b1 && !delay && !(key_down & (~(1 << last_change))))begin // space down ?
-				next_RD = RD;
-				case (RD_poniter)
-					0:next_RD[59 : 50] = random_id;
-					1:next_RD[9 : 0] = random_id;
-					2:next_RD[19 : 10] = random_id;
-					3:next_RD[29 : 20] = random_id;
-					4:next_RD[39 : 30] = random_id;
-					5:next_RD[49 : 40] = random_id;
-					default: next_RD = RD;
-				endcase
+				next_RD = {RD[59:10], (cnt_random & 8'd255) + 1};
 			end else begin
 				next_RD = RD;
 			end
@@ -175,40 +170,12 @@ module count(
 		end
 	end
 
-	/*RD_pointer*/always @ (posedge clk, posedge rst) begin
-    	if (rst) begin
-			RD_poniter <= 0;
-    	end else begin
-			RD_poniter <= next_RD_pointer;
-    	end
-    end
-
-	always @(*) begin
-		if(state == INGAME)begin
-			if(cursor && key_num == 28 && key_valid && key_down[last_change] == 1'b1 && !delay && !(key_down & (~(1 << last_change))))begin // space down ?
-				next_RD_pointer = (RD_poniter < 5) ? RD_poniter + 1 : 0;
-			end else begin
-				next_RD_pointer = RD_poniter;
-			end
-		end else begin
-			next_RD_pointer = 0;
-		end
-	end
-
 	/*ID*/always @ (posedge clk, posedge rst) begin
     	if (rst) begin
 			id <= 0;
     	end else begin
 			if(state == INGAME)begin
-				case (RD_poniter)
-					0:id <= RD[9 : 0];
-					1:id <= RD[19 : 10];
-					2:id <= RD[29 : 20];
-					3:id <= RD[39 : 30];
-					4:id <= RD[49 : 40];
-					5:id <= RD[59 : 50];
-					default: id <= RD[9 : 0];
-				endcase
+				id <= RD[9:0];
 			end else begin
 				id <= RD[9 : 0];
 			end
