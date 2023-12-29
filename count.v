@@ -8,11 +8,12 @@ module count(
 	input [8:0] last_change,
 	input key_valid,
 	input [9:0] random_id,
+	output reg [14:0] timer,
 	output reg [15:0] nums,
 	output reg [4:0] cursor,
 	output reg [124:0] type,
-	output reg [7:0] wpm,
-	output reg [6:0] acc,
+	output reg [9:0] wpm,
+	output reg [9:0] acc,
 	output reg [4:0] correct,
 	output reg finish,
 	output reg [59:0] RD
@@ -48,7 +49,7 @@ module count(
 	reg next_finish;
 	reg [59:0] next_RD;
 	reg [2:0] RD_poniter, next_RD_pointer;
-	reg [14:0] timer, next_timer;//max = 2047
+	reg [14:0] next_timer;//max = 2047
 	reg [14:0] cnt, next_cnt;
 	reg [6:0] num, next_num;
 	reg [4:0] typecount;
@@ -56,11 +57,16 @@ module count(
 	reg [4:0] next_cursor;
 	reg [4:0] next_correct;
 	reg [4:0] key_num;
-	wire clk_div;
+	reg [10:0] total, next_total;
+	reg [10:0] type_total, next_type_total;
+	reg [10:0] total_correct, next_total_correct;
+	reg [9:0] next_wpm;
+	reg [9:0] next_acc;
+ 	wire clk_div;
 
 	looHz_counter ct (.clk(clk), .clk_div(clk_div));
 
-	/*time*/always @ (posedge clk_div, posedge rst) begin
+	/*timer*/always @ (posedge clk_div, posedge rst) begin
     	if (rst) begin
     		timer <= 0;
     	end else begin
@@ -246,7 +252,9 @@ module count(
 					next_type[cursor * 5 + 2] = key_num[2];
 					next_type[cursor * 5 + 3] = key_num[3];
 					next_type[cursor * 5 + 4] = key_num[4];
-				end
+				end 
+			end else begin
+				next_type = type;
 			end
 		end else begin
 			next_type = 0;
@@ -300,11 +308,11 @@ module count(
 				next_correct = 0;
 				for(i = 0; i < cursor; i = i + 1)begin
 					if(
-						type[i * 5 - 5] == word[i * 5 - 5] && 
-						type[i * 5 - 5 + 1] == word[i * 5 - 5 + 1] &&
-						type[i * 5 - 5 + 2] == word[i * 5 - 5 + 2] && 
-						type[i * 5 - 5 + 3] == word[i * 5 - 5 + 3] && 
-						type[i * 5 - 5 + 4] == word[i * 5 - 5 + 4]  
+						type[i * 5] == word[i * 5] && 
+						type[i * 5 + 1] == word[i * 5 + 1] &&
+						type[i * 5 + 2] == word[i * 5 + 2] && 
+						type[i * 5 + 3] == word[i * 5 + 3] && 
+						type[i * 5 + 4] == word[i * 5 + 4]  
 					)begin
 						next_correct = next_correct + 1;
 					end else begin
@@ -318,6 +326,107 @@ module count(
 			next_correct = 0;
 		end
 	end
+
+	/*total*/always @ (posedge clk, posedge rst) begin
+    	if(rst) begin
+			total <= 0;
+    	end else begin
+			total <= next_total;
+    	end
+    end
+
+	always @(*) begin
+		if(state == INGAME)begin 
+			if(key_num == 28 && key_valid && key_down[last_change] == 1'b1 && !delay && !(key_down & (~(1 << last_change))))begin//space
+				next_total = total + wordnum;
+			end else begin
+				next_total = total;
+			end
+		end else begin
+			next_total = 0;
+		end
+	end
+
+	/*type_total*/always @ (posedge clk, posedge rst) begin
+    	if(rst) begin
+			type_total <= 0;
+    	end else begin
+			type_total <= next_type_total;
+    	end
+    end
+
+	always @(*) begin
+		if(state == INGAME)begin 
+			if(key_num == 28 && key_valid && key_down[last_change] == 1'b1 && !delay && !(key_down & (~(1 << last_change))))begin//space
+				next_type_total = type_total + cursor;
+			end else begin
+				next_type_total = type_total;
+			end
+		end else begin
+			next_type_total = 0;
+		end
+	end
+
+	/*total_correct*/always @ (posedge clk, posedge rst) begin
+    	if (rst) begin
+			total_correct <= 0;
+    	end else begin
+			total_correct <= next_total_correct;
+    	end
+    end
+
+	always @(*) begin
+		if(state == INGAME)begin 
+			if(key_num == 28 && key_valid && key_down[last_change] == 1'b1 && !delay && !(key_down & (~(1 << last_change))))begin//space
+				next_total_correct = total_correct + correct;
+			end else begin
+				next_total_correct = total_correct;
+			end
+		end else begin
+			next_total_correct = 0;
+		end
+	end
+
+	/*acc*/always @(posedge clk, posedge rst)begin
+		if(rst)begin
+			acc <= 0;
+		end else begin
+			acc <= next_acc;
+		end
+	end
+
+	always @(*)begin
+		if(state == INGAME)begin 
+			if((type_total + cursor) > 0)begin
+				next_acc = ((total_correct + correct) * 100) / (type_total + cursor);
+			end else begin
+				next_acc = 0;
+			end
+		end else begin
+			next_acc = 0;
+		end
+	end
+
+	/*wpm*/always @(posedge clk, posedge rst)begin
+		if(rst)begin
+			wpm <= 0;
+		end else begin
+			wpm <= next_wpm;
+		end
+	end
+
+	always @(*)begin
+		if(state == INGAME)begin 
+			if(timer && (type_total + cursor) > 0)begin
+				next_wpm = ((total_correct + correct) / 5) / (timer / 6000);
+			end else begin
+				next_wpm = 0;
+			end
+		end else begin
+			next_wpm = 0;
+		end
+	end
+
 
 	/*key_num*/always @ (*) begin
 		case (last_change)
@@ -366,10 +475,11 @@ module count(
 			nums[15:12] = 0;//
 		end	
 	end*/
-
+	wire [4:0] w1, w2;
+	assign w1 = type[cursor * 5 - 5] + type[cursor * 5 - 5 + 1] * 2 + type[cursor * 5 - 5 + 2] * 4 + type[cursor * 5 - 5 + 3] * 8 + type[cursor * 5 - 5 + 4] * 16; 
 	always @(*) begin
-		nums[3:0] = cursor % 10;
-		nums[7:4] = cursor / 10; 
+		nums[3:0] = w1 % 10;
+		nums[7:4] = w1 / 10; 
 		nums[11:8] = num % 10;
 		nums[15:12] = num / 10;
 	end
