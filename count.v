@@ -272,21 +272,24 @@ module count(
 	always @(*) begin
 		if(state == INGAME)begin 
 			if(cursor)begin
-			    if(cursor >= 15)begin
+			    if(cursor >= wordnum)begin
 			        next_correct = correct;
 			    end else begin
                     next_correct = 0;
-                    for(i = 0; i < cursor; i = i + 1)begin
-                        if(
-                            type[i * 5] == word[i * 5] && 
-                            type[i * 5 + 1] == word[i * 5 + 1] &&
-                            type[i * 5 + 2] == word[i * 5 + 2] && 
-                            type[i * 5 + 3] == word[i * 5 + 3] && 
-                            type[i * 5 + 4] == word[i * 5 + 4]  
-                        )begin
-                            next_correct = next_correct + 1;
-                        end else begin
-                            next_correct = next_correct;
+                    begin : loop
+                        for(i = 0; i < cursor; i = i + 1)begin
+                            if(
+                                type[i * 5] == word[i * 5] && 
+                                type[i * 5 + 1] == word[i * 5 + 1] &&
+                                type[i * 5 + 2] == word[i * 5 + 2] && 
+                                type[i * 5 + 3] == word[i * 5 + 3] && 
+                                type[i * 5 + 4] == word[i * 5 + 4]  
+                            )begin
+                                next_correct = next_correct + 1;
+                            end else begin
+                                next_correct = next_correct;
+                                disable loop;
+                            end
                         end
                     end
                 end
