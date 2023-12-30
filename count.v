@@ -15,8 +15,8 @@ module count(
 	output reg [9:0] acc,
 	output reg [4:0] correct,
 	output reg finish,
-	output reg [59:0] RD
-	
+	output reg [59:0] RD,
+	output wire [9:0] percent
 );	
 	parameter SELECT = 0;
 	parameter COUNTDOWN = 1;
@@ -65,6 +65,8 @@ module count(
  	wire clk_div;
 
 	looHz_counter ct (.clk(clk), .clk_div(clk_div));
+
+	assign percent = mode ? ((value * 100 - cnt) / value) : ((num * 100) / value);
 
 	/*timer*/always @ (posedge clk_div, posedge rst) begin
     	if (rst) begin
@@ -306,7 +308,7 @@ module count(
 					next_correct = correct;
 				end
 			end else if(key_num < 27 && key_valid && key_down[last_change] == 1'b1 && !delay && !(key_down & (~(1 << last_change))))begin
-				if(cursor < wordnum && cursor == correct)begin
+				if(cursor <= wordnum && cursor == correct)begin
 					if(
 						key_num[0] == word[cursor * 5] && 
 						key_num[1] == word[cursor * 5 + 1] &&
