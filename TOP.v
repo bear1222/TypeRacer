@@ -38,6 +38,7 @@ module TOP(
 	wire [4:0] id;//
 	wire [74:0] word;
 	wire [14:0] timer;
+	wire [9:0] percent;
 	
 	wire key_valid;
 	wire [7:0] last_change;
@@ -91,13 +92,14 @@ module TOP(
 		.nums(num2),
 		.timer(timer),
 		.cursor(cursor),
-		.random_id(random_id),
+		//.random_id(random_id),
 		.type(type),
 		.wpm(wpm),
 		.acc(acc),
 		.correct(correct),
 		.finish(finish),
-		.RD(RD)
+		.RD(RD),
+		.percent(percent)
 	);
 
 	/*dictionary dic(
@@ -113,6 +115,7 @@ module TOP(
 	vga v(
 		.clk(clk), 
 		.rst(rst), 
+		.percent(percent),
 		.wpm(wpm), 
 		.acc(acc),
 		.tot(cursor), 
