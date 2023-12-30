@@ -114,7 +114,7 @@ module count(
 
 	always @(*) begin
 		if(state == INGAME/* && mode == 1*/)begin
-			if(cursor && key_num == 28 && key_valid && key_down[last_change] == 1'b1 && !delay && !(key_down & (~(1 << last_change))))begin//space down ?
+			if(cursor && key_num == 28 && key_valid && key_down[last_change] == 1'b1 && !delay /*&& !(key_down & (~(1 << last_change)))*/)begin//space down ?
 				next_num = num + 1;
 			end else begin
 				next_num = num;
@@ -163,7 +163,7 @@ module count(
 
 	always @(*) begin
 		if(state == INGAME )begin
-			if(cursor && key_num == 28 && key_valid && key_down[last_change] == 1'b1 && !delay && !(key_down & (~(1 << last_change))))begin // space down ?
+			if(cursor && key_num == 28 && key_valid && key_down[last_change] == 1'b1 && !delay /*&& !(key_down & (~(1 << last_change)))*/)begin // space down ?
 				next_RD = {(cnt_random & 10'd255) + 1, RD[59:10]};
 			end else begin
 				next_RD = RD;
@@ -199,13 +199,13 @@ module count(
 
 	always @(*) begin
 		if(state == INGAME)begin 
-			if(key_num == 28 && key_valid && key_down[last_change] == 1'b1 && !delay && !(key_down & (~(1 << last_change))))begin//space 
+			if(key_num == 28 && key_valid && key_down[last_change] == 1'b1 && !delay /*&& !(key_down & (~(1 << last_change)))*/)begin//space 
 				if(cursor)begin
 					next_type = 0;
 				end else begin
 					next_type = type;
 				end
-			end else if(key_num == 27 && key_valid && key_down[last_change] == 1'b1 && !(key_down & (~(1 << last_change))))begin//back
+			end else if(key_num == 27 && key_valid && key_down[last_change] == 1'b1 /*&& !(key_down & (~(1 << last_change)))*/)begin//back
 				next_type = type;
 				if(cursor)begin
 					next_type[cursor * 5 - 5] = 0;
@@ -214,7 +214,7 @@ module count(
 					next_type[cursor * 5 + 3 - 5] = 0;
 					next_type[cursor * 5 + 4 - 5] = 0;
 				end
-			end else if(key_num < 27 && key_valid && key_down[last_change] == 1'b1 && !delay && !(key_down & (~(1 << last_change))))begin
+			end else if(key_num < 27 && key_valid && key_down[last_change] == 1'b1 && !delay /*&& !(key_down & (~(1 << last_change)))*/)begin
 				next_type = type;
 				if(cursor < 25)begin
 					next_type[cursor * 5] = key_num[0];
@@ -241,15 +241,15 @@ module count(
 
 	always @(*) begin
 		if(state == INGAME)begin 
-			if(key_num == 28 && key_valid && key_down[last_change] == 1'b1 && !delay && !(key_down & (~(1 << last_change))))begin//space 
+			if(key_num == 28 && key_valid && key_down[last_change] == 1'b1 && !delay /*&& !(key_down & (~(1 << last_change)))*/)begin//space 
 				next_cursor = 0;
-			end else if(key_num == 27 && key_valid && key_down[last_change] == 1'b1 && !(key_down & (~(1 << last_change))))begin//back
+			end else if(key_num == 27 && key_valid && key_down[last_change] == 1'b1 /*&& !(key_down & (~(1 << last_change)))*/)begin//back
 				if(cursor)begin
 					next_cursor = cursor - 1;
 				end else begin
 					next_cursor = cursor;
 				end
-			end else if(key_num < 27 && key_valid && key_down[last_change] == 1'b1 && !delay && !(key_down & (~(1 << last_change))))begin
+			end else if(key_num < 27 && key_valid && key_down[last_change] == 1'b1 && !delay /*&& !(key_down & (~(1 << last_change)))*/)begin
 				if(cursor < 25)begin
 					next_cursor = cursor + 1;
 				end else begin
@@ -299,15 +299,15 @@ module count(
 			end else begin
 				next_correct = correct;
 			end*/
-			if(key_num == 28 && key_valid && key_down[last_change] == 1'b1 && !delay && !(key_down & (~(1 << last_change))))begin//space 
+			if(key_num == 28 && key_valid && key_down[last_change] == 1'b1 && !delay /*&& !(key_down & (~(1 << last_change)))*/)begin//space 
 				next_correct = 0;
-			end else if(key_num == 27 && key_valid && key_down[last_change] == 1'b1 && !(key_down & (~(1 << last_change))))begin//back
+			end else if(key_num == 27 && key_valid && key_down[last_change] == 1'b1 /*&& !(key_down & (~(1 << last_change)))*/)begin//back
 				if(cursor && cursor == correct)begin
 					next_correct = correct - 1;
 				end else begin
 					next_correct = correct;
 				end
-			end else if(key_num < 27 && key_valid && key_down[last_change] == 1'b1 && !delay && !(key_down & (~(1 << last_change))))begin
+			end else if(key_num < 27 && key_valid && key_down[last_change] == 1'b1 && !delay /*&& !(key_down & (~(1 << last_change)))*/)begin
 				if(cursor <= wordnum && cursor == correct)begin
 					if(
 						key_num[0] == word[cursor * 5] && 
@@ -340,7 +340,7 @@ module count(
 
 	always @(*) begin
 		if(state == INGAME)begin 
-			if(key_num == 28 && key_valid && key_down[last_change] == 1'b1 && !delay && !(key_down & (~(1 << last_change))))begin//space
+			if(key_num == 28 && key_valid && key_down[last_change] == 1'b1 && !delay /*&& !(key_down & (~(1 << last_change)))*/)begin//space
 				next_total = total + wordnum;
 			end else begin
 				next_total = total;
@@ -360,7 +360,7 @@ module count(
 
 	always @(*) begin
 		if(state == INGAME)begin 
-			if(key_num == 28 && key_valid && key_down[last_change] == 1'b1 && !delay && !(key_down & (~(1 << last_change))))begin//space
+			if(key_num == 28 && key_valid && key_down[last_change] == 1'b1 && !delay /*&& !(key_down & (~(1 << last_change)))*/)begin//space
 				next_type_total = type_total + cursor;
 			end else begin
 				next_type_total = type_total;
@@ -380,7 +380,7 @@ module count(
 
 	always @(*) begin
 		if(state == INGAME)begin 
-			if(key_num == 28 && key_valid && key_down[last_change] == 1'b1 && !delay && !(key_down & (~(1 << last_change))))begin//space
+			if(key_num == 28 && key_valid && key_down[last_change] == 1'b1 && !delay /*&& !(key_down & (~(1 << last_change)))*/)begin//space
 				next_total_correct = total_correct + correct;
 			end else begin
 				next_total_correct = total_correct;
