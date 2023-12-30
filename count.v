@@ -272,7 +272,7 @@ module count(
 
 	always @(*) begin
 		if(state == INGAME)begin 
-			if(cursor)begin
+			/*if(cursor)begin
 			    if(cursor >= wordnum)begin
 			        next_correct = correct;
 			    end else begin
@@ -294,6 +294,32 @@ module count(
                         end
                     end
                 end
+			end else begin
+				next_correct = correct;
+			end*/
+			if(key_num == 28 && key_valid && key_down[last_change] == 1'b1 && !delay && !(key_down & (~(1 << last_change))))begin//space 
+				next_correct = 0;
+			end else if(key_num == 27 && key_valid && key_down[last_change] == 1'b1 && !(key_down & (~(1 << last_change))))begin//back
+				if(cursor && cursor == correct)begin
+					next_correct = correct - 1;
+				end else begin
+					next_correct = correct;
+				end
+			end else if(key_num < 27 && key_valid && key_down[last_change] == 1'b1 && !delay && !(key_down & (~(1 << last_change))))begin
+				if(cursor < wordnum && cursor == correct)begin
+					if(
+						key_num[0] == word[cursor * 5] && 
+						key_num[1] == word[cursor * 5 + 1] &&
+						key_num[2] == word[cursor * 5 + 2] && 
+						key_num[3] == word[cursor * 5 + 3] && 
+						key_num[4] == word[cursor * 5 + 4]
+					)
+						next_correct = correct + 1;
+					else
+						next_correct = correct;
+				end else begin
+					next_correct = correct;
+				end
 			end else begin
 				next_correct = correct;
 			end
