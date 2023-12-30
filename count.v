@@ -7,7 +7,6 @@ module count(
 	input [127:0] key_down,
 	input [8:0] last_change,
 	input key_valid,
-	input [9:0] random_id,
 	output reg [14:0] timer,
 	output reg [15:0] nums,
 	output reg [4:0] cursor,
@@ -36,7 +35,7 @@ module count(
 	parameter BACK = 7'd102;
 	parameter SPACE = 7'd41;
 
-	reg [6:0] id;
+	reg [7:0] id;
 	wire [74:0] word;
 	wire [4:0] wordnum;
 	
@@ -151,9 +150,11 @@ module count(
 
 	/*RD*/always @ (posedge clk, posedge rst) begin
     	if (rst) begin
-			RD <= {cnt_random + 1, (cnt_random ^ value) + 1, cnt_random + value + 1, cnt_random - value + 1, ~cnt_random + 1};
-//			RD <= {10'd1, 10'd2, 10'd3, 10'd4, 10'd5};
-    	end else begin
+			RD <= 0;
+		end else if(state == INGAME && timer == 0) begin
+			RD <= {cnt_random + 1, (cnt_random ^ value) + 1, cnt_random + cnt + 1, cnt_random - value + 1, ~cnt_random + 1, cnt_random ^ (cnt << 2)};
+//			RD <= {10'd1, 10'd2, 10'd3, 10'd4, 10'd5, 10'd6};
+		end else begin
 			RD <= next_RD;
     	end
     end
@@ -161,7 +162,7 @@ module count(
 	always @(*) begin
 		if(state == INGAME )begin
 			if(cursor && key_num == 28 && key_valid && key_down[last_change] == 1'b1 && !delay && !(key_down & (~(1 << last_change))))begin // space down ?
-				next_RD = {RD[59:10], (cnt_random & 8'd255) + 1};
+				next_RD = {(cnt_random & 10'd255) + 1, RD[59:10]};
 			end else begin
 				next_RD = RD;
 			end
