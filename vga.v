@@ -1,5 +1,9 @@
 `define typeline 370
 `define wordline 300
+`define accline 20
+`define wpmline 40
+`define ystart 540
+
 module clock_divider #(
     parameter n = 27
 )(
@@ -21,7 +25,7 @@ endmodule
 module vga(
     input clk, 
     input rst, 
-    input [9:0] percent,
+    input [9:0] percent, 
     input [9:0] wpm, 
     input [9:0] acc, 
     input [4:0] correct, tot,
@@ -115,7 +119,7 @@ module vga(
         .v_cnt(vgax)
     );
 
-    wire [2:0] pixel_type, pixel_w0, pixel_w1, pixel_w2, pixel_w3, pixel_w4;
+    wire [2:0] pixel_type, pixel_w0, pixel_w1, pixel_w2, pixel_w3, pixel_w4, pixel_acc, pixel_wpm, pixel_acc_text, pixel_wpm_text;
     text_display type_in(
         .clk(clk), 
         .valid(valid), 
@@ -137,8 +141,8 @@ module vga(
         .vgay(vgay), 
         .sx(`wordline), 
         .ex(`wordline + 16),
-        .sy(150 + st0 * 8), 
-        .ey(150 + st1 * 8 - 8),
+        .sy(150 + (st0 << 3)), 
+        .ey(150 + (st1 << 3) - 8),
         .correct(correct), 
         .tot(tot),
         .text(word0),
@@ -153,8 +157,8 @@ module vga(
         .vgay(vgay), 
         .sx(`wordline), 
         .ex(`wordline + 16),
-        .sy(150 + st1 * 8), 
-        .ey(150 + st2 * 8 - 8),
+        .sy(150 + (st1 << 3)), 
+        .ey(150 + (st2 << 3) - 8),
         .text(word1),
         .font_color(4), 
         .background_color(1),
@@ -167,8 +171,8 @@ module vga(
         .vgay(vgay), 
         .sx(`wordline), 
         .ex(`wordline + 16),
-        .sy(150 + st2 * 8), 
-        .ey(150 + st3 * 8 - 8),
+        .sy(150 + (st2 << 3)), 
+        .ey(150 + (st3 << 3) - 8),
         .text(word2),
         .font_color(4), 
         .background_color(1),
@@ -181,8 +185,8 @@ module vga(
         .vgay(vgay), 
         .sx(`wordline), 
         .ex(`wordline + 16),
-        .sy(150 + st3 * 8), 
-        .ey(150 + st4 * 8 - 8),
+        .sy(150 + (st3 << 3)), 
+        .ey(150 + (st4 << 3) - 8),
         .text(word3),
         .font_color(4), 
         .background_color(1),
@@ -195,15 +199,55 @@ module vga(
         .vgay(vgay), 
         .sx(`wordline), 
         .ex(`wordline + 16),
-        .sy(150 + st4 * 8), 
-        .ey(150 + (st4 + len4) * 8),
+        .sy(150 + (st4 << 3)), 
+        .ey(150 + ((st4 + len4) << 3)),
         .text(word4),
         .font_color(4), 
         .background_color(1),
         .pixel(pixel_w4)
     );
+    text_display acctext(
+        .clk(clk), 
+        .valid(valid), 
+        .vgax(vgax), .vgay (vgay), 
+        .sx(`accline), .ex(`accline + 16), 
+        .sy(`ystart), .ey(`ystart + 8 * 4), 
+        .text({5'd3, 5'd3, 5'd1}), 
+        .font_color(4), .background_color(0), 
+        .pixel(pixel_acc_text)
+    );
+    num_display accdisplay(
+        .clk(clk), 
+        .valid(valid), 
+        .vgax(vgax), .vgay (vgay), 
+        .sx(`accline), .ex(`accline + 16), 
+        .sy(`ystart + 8 * 4), .ey(`ystart + 8 * 8), 
+        .num(acc), .dot(1), 
+        .font_color(4), .background_color(0), 
+        .pixel(pixel_acc)
+    );
+    text_display wpmtext(
+        .clk(clk), 
+        .valid(valid), 
+        .vgax(vgax), .vgay (vgay), 
+        .sx(`wpmline), .ex(`wpmline + 16), 
+        .sy(`ystart), .ey(`ystart + 8 * 7), 
+        .text({5'd13, 5'd16, 5'd23}),
+        .font_color(4), .background_color(0), 
+        .pixel(pixel_wpm_text)
+    );
+    num_display wpmdisplay(
+        .clk(clk), 
+        .valid(valid), 
+        .vgax(vgax), .vgay (vgay), 
+        .sx(`wpmline), .ex(`wpmline + 16), 
+        .sy(`ystart + 8 * 4), .ey(`ystart + 8 * 7), 
+        .num(wpm), .dot(0), 
+        .font_color(4), .background_color(0), 
+        .pixel(pixel_wpm)
+    );
 
-    wire [2:0] pixel_id;
+    wire [2:0] pixel_id, pixel_id1;
     find_max mx(
         .a1(pixel_type), 
         .a2(pixel_w0), 
@@ -211,8 +255,17 @@ module vga(
         .a4(pixel_w2), 
         .a5(pixel_w3), 
         .a6(pixel_w4), 
+        .a7(pixel_acc), 
+        .a8(pixel_wpm), 
+        .mx(pixel_id1)
+    );
+    find_max mx2(
+        .a1(pixel_acc_text), 
+        .a2(pixel_wpm_text), 
+        .a3(pixel_id1), 
         .mx(pixel_id)
     );
+
     always @ (posedge clk_25MHz) begin
         case(pixel_id)
             0: pixel <= 12'hFFF;
