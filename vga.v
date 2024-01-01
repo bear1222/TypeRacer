@@ -1,8 +1,10 @@
 `define typeline 370
 `define wordline 300
-`define accline 20
-`define wpmline 40
-`define ystart 540
+`define accline 40
+`define wpmline 60
+`define ystart 510
+`define timeline 40
+`define timeystart 50
 
 module clock_divider #(
     parameter n = 27
@@ -57,11 +59,11 @@ module vga(
     wire [4:0] len0, len1, len2, len3, len4;
     wire [7:0] id0, id1, id2, id3, id4;
 
-    assign id0 = rd[0  +: 10];
-    assign id1 = rd[10 +: 10];
-    assign id2 = rd[20 +: 10];
-    assign id3 = rd[30 +: 10];
-    assign id4 = rd[40 +: 10];
+    assign id0 = rd[0  +: 8];
+    assign id1 = rd[10 +: 8];
+    assign id2 = rd[20 +: 8];
+    assign id3 = rd[30 +: 8];
+    assign id4 = rd[40 +: 8];
 
     dictionary dic0(
         .id(id0), 
@@ -119,7 +121,7 @@ module vga(
         .v_cnt(vgax)
     );
 
-    wire [2:0] pixel_type, pixel_w0, pixel_w1, pixel_w2, pixel_w3, pixel_w4, pixel_acc, pixel_wpm, pixel_acc_text, pixel_wpm_text;
+    wire [2:0] pixel_type, pixel_w0, pixel_w1, pixel_w2, pixel_w3, pixel_w4, pixel_acc, pixel_wpm, pixel_acc_text, pixel_wpm_text, pixel_time, pixel_time_text;
     text_display type_in(
         .clk(clk), 
         .valid(valid), 
@@ -231,7 +233,7 @@ module vga(
         .valid(valid), 
         .vgax(vgax), .vgay (vgay), 
         .sx(`wpmline), .ex(`wpmline + 16), 
-        .sy(`ystart), .ey(`ystart + 8 * 7), 
+        .sy(`ystart), .ey(`ystart + 8 * 4), 
         .text({5'd13, 5'd16, 5'd23}),
         .font_color(4), .background_color(0), 
         .pixel(pixel_wpm_text)
@@ -245,6 +247,26 @@ module vga(
         .num(wpm), .dot(0), 
         .font_color(4), .background_color(0), 
         .pixel(pixel_wpm)
+    );
+    text_display timetext(
+        .clk(clk), 
+        .valid(valid), 
+        .vgax(vgax), .vgay (vgay), 
+        .sx(`timeline), .ex(`timeline + 16), 
+        .sy(`timeystart), .ey(`timeystart + 8 * 5), 
+        .text({5'd5, 5'd13, 5'd9, 5'd20}),
+        .font_color(4), .background_color(0), 
+        .pixel(pixel_time_text)
+    );
+    num_display timedisplay(
+        .clk(clk), 
+        .valid(valid), 
+        .vgax(vgax), .vgay (vgay), 
+        .sx(`timeline), .ex(`timeline + 16), 
+        .sy(`timeystart + 8 * 5), .ey(`timeystart + 8 * 9), 
+        .num(times / 10), .dot(1), 
+        .font_color(4), .background_color(0), 
+        .pixel(pixel_time)
     );
 
     wire [2:0] pixel_id, pixel_id1;
@@ -260,19 +282,21 @@ module vga(
         .mx(pixel_id1)
     );
     find_max mx2(
-        .a1(pixel_acc_text), 
+        .a1(pixel_id1), 
         .a2(pixel_wpm_text), 
-        .a3(pixel_id1), 
+        .a3(pixel_acc_text), 
+        .a4(pixel_time), 
+        .a5(pixel_time_text), 
         .mx(pixel_id)
     );
 
     always @ (posedge clk_25MHz) begin
         case(pixel_id)
-            0: pixel <= 12'hFFF;
-            1: pixel <= 12'h0FF;
-            2: pixel <= 12'hF00;
-            3: pixel <= 12'h0F0;
-            4: pixel <= 12'd0;
+            0: pixel <= 12'hFFF; // white
+            1: pixel <= 12'h0FF; // blue
+            2: pixel <= 12'hF00; // red
+            3: pixel <= 12'h0F0; // green
+            4: pixel <= 12'd0;   // black
             default: pixel <= 12'h00F; // error
         endcase
     end
