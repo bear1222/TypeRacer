@@ -171,10 +171,14 @@ module count(
 	always @(*) begin 
 		if(state == INGAME )begin
 			if(cursor && key_num == 28 && key_valid && key_down[last_change] == 1'b1 && !delay /*&& !(key_down & (~(1 << last_change)))*/)begin // space down ?
-				if(value - num > 6)
+				if(mode)begin
+					if(value - num > 6)
+						next_RD = {(cnt_random | 1), RD[47:8]};
+					else 
+						next_RD = {8'd0, RD[47:8]};
+				end else begin
 					next_RD = {(cnt_random | 1), RD[47:8]};
-				else 
-					next_RD = {8'd0, RD[47:8]};
+				end
 			end else begin
 				next_RD = RD;
 			end
