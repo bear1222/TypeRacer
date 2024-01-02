@@ -7,7 +7,7 @@ module count(
 	input [127:0] key_down,
 	input [8:0] last_change,
 	input key_valid,
-	output reg [14:0] timer,
+	output reg [10:0] timer,
 	output reg [15:0] nums,
 	output reg [4:0] cursor,
 	output reg [74:0] type,
@@ -47,8 +47,8 @@ module count(
 	
 	reg next_finish;
 	reg [47:0] next_RD;
-	reg [14:0] next_timer;//max = 2047
-	reg [14:0] cnt, next_cnt;
+	reg [10:0] next_timer;//max = 2047
+	reg [10:0] cnt, next_cnt;
 	reg [6:0] num, next_num;
 	reg [4:0] typecount;
 	reg [74:0] next_type;
@@ -63,9 +63,9 @@ module count(
 	reg delay;
  	wire clk_div;
 
-	looHz_counter ct (.clk(clk), .clk_div(clk_div));
+	loHz_counter ct (.clk(clk), .clk_div(clk_div));
 
-	assign percent = mode ? ((num * 100) / value) : ((value * 100 - cnt) / value);
+	assign percent = mode ? ((num * 100) / value) : ((value * 10 - cnt) * 10 / value);
 
 	/*timer*/always @ (posedge clk_div, posedge rst) begin
     	if (rst) begin
@@ -77,7 +77,7 @@ module count(
 
 	always @(*) begin
 		if(state == INGAME)begin
-			next_timer = (timer < 18000) ? timer + 1 : 18000;
+			next_timer = (timer < 1800) ? timer + 1 : 1800;
 		end else if(state == SELECT)begin
 			next_timer = 0;
 		end else begin
@@ -87,7 +87,7 @@ module count(
 
     /*time*/always @ (posedge clk_div, posedge rst) begin
     	if (rst) begin
-    		cnt <= 1500;
+    		cnt <= 150;
     	end else begin
 			cnt <= next_cnt;
     	end
@@ -97,7 +97,7 @@ module count(
 		if(state == INGAME && mode == 0)begin
 			next_cnt = (cnt) ? cnt - 1 : 0;
 		end else if(state == SELECT && mode == 0)begin
-			next_cnt = value * 100;
+			next_cnt = value * 10;
 		end else begin
 			next_cnt = cnt;
 		end
@@ -133,7 +133,7 @@ module count(
 
 	always @(*) begin
 		if(state == INGAME)begin
-			if(timer == 18000)
+			if(timer == 1800)
 				next_finish = 1;
 			else if(mode && num == value)//num
 				next_finish = 1;
@@ -400,7 +400,7 @@ module count(
 	always @(*)begin
 		if(state == INGAME)begin 
 			if(timer && total)begin
-				next_wpm = ((total_correct + correct) * 1200) / timer;
+				next_wpm = ((total_correct + correct) * 120) / timer;
 			end else begin
 				next_wpm = 0;
 			end

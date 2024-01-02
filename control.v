@@ -14,7 +14,7 @@ module control(
 	output reg [1:0] state,
 	output reg [15:0] nums
 );	
-	reg [9:0] cnt, next_cnt;
+	reg [4:0] cnt, next_cnt;
 	reg [6:0] Num, Time, next_Num, next_Time;
 	reg [1:0] next_state;
 	reg next_Mode;
@@ -24,11 +24,11 @@ module control(
 	parameter INGAME = 2;
 	parameter FINISH = 3;
 
-	looHz_counter ct (.clk(clk), .clk_div(clk_div));
+	loHz_counter ct (.clk(clk), .clk_div(clk_div));
 
 	always @ (posedge clk_div, posedge rst) begin
     	if (rst) begin
-    		cnt <= 300;
+    		cnt <= 30;
     	end else begin
 			cnt <= next_cnt;
     	end
@@ -38,7 +38,7 @@ module control(
 		if(state == COUNTDOWN)begin
 			next_cnt = (cnt) ? cnt - 1 : 0;
 		end else if(state == SELECT)begin
-			next_cnt = 300;
+			next_cnt = 30;
 		end else begin
 			next_cnt = cnt;
 		end

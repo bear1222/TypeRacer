@@ -1,8 +1,8 @@
-module looHz_counter(
+module loHz_counter(
     input clk,
     output reg clk_div
 );
-    reg [19:0] num = 0,next_num = 1;
+    reg [23:0] num = 0,next_num = 1;
     initial begin
         num = 0;
         next_num = 1;
@@ -11,7 +11,7 @@ module looHz_counter(
         num <= next_num;
     end
     always@(*)begin
-        if(num == 20'd1000000)begin
+        if(num == 24'd10000000)begin
             next_num = 0;
             clk_div = 1;
         end else begin
