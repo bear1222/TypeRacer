@@ -163,9 +163,6 @@ module count(
 			RD <= 0;
 		end else if(state == INGAME && timer == 0) begin
 			RD <= {rd6, rd5, rd4, rd3, rd2, rd1};
-//			RD <= (cnt_random << 50) | (/*(~cnt_random2)*/ 1 << 40) | ((cnt_random ^ cnt_random2) << 30) | ((cnt_random ^ value) << 20) | ((~cnt_random) << 10) | (value + cnt_random);
-//			RD <= {cnt_random + 1, /*(~cnt_random2) +*/ 10'd1, cnt_random2 + 1, cnt_random - (value << 1) + 1, ~cnt_random + 1, cnt_random ^ (cnt << 2)};
-//			RD <= {10'd1, 10'd2, 10'd3, 10'd4, 10'd5, 10'd6};
 		end else begin
 			RD <= next_RD;
     	end
@@ -174,7 +171,10 @@ module count(
 	always @(*) begin 
 		if(state == INGAME )begin
 			if(cursor && key_num == 28 && key_valid && key_down[last_change] == 1'b1 && !delay /*&& !(key_down & (~(1 << last_change)))*/)begin // space down ?
-				next_RD = {(cnt_random | 1), RD[47:8]};
+				if(value - num > 6)
+					next_RD = {(cnt_random | 1), RD[47:8]};
+				else 
+					next_RD = {8'd0, RD[47:8]};
 			end else begin
 				next_RD = RD;
 			end
