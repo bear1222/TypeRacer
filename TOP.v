@@ -92,7 +92,6 @@ module TOP(
 		.nums(num2),
 		.timer(timer),
 		.cursor(cursor),
-		//.random_id(random_id),
 		.type(type),
 		.wpm(wpm),
 		.acc(acc),

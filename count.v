@@ -15,7 +15,7 @@ module count(
 	output reg [9:0] acc,
 	output reg [4:0] correct,
 	output reg finish,
-	output reg [59:0] RD,
+	output reg [47:0] RD,
 	output wire [9:0] percent
 );	
 	parameter SELECT = 0;
@@ -46,8 +46,7 @@ module count(
 	);
 	
 	reg next_finish;
-	reg [59:0] next_RD;
-	reg [2:0] RD_poniter, next_RD_pointer;
+	reg [47:0] next_RD;
 	reg [14:0] next_timer;//max = 2047
 	reg [14:0] cnt, next_cnt;
 	reg [6:0] num, next_num;
@@ -147,11 +146,11 @@ module count(
 		end
 	end
 
-	reg [9:0] cnt_random, cnt_random2;
+	reg [7:0] cnt_random, cnt_random2;
 	always @ (posedge clk_div or posedge rst) cnt_random <= rst ? 0 : cnt_random + 1;
 	always @ (posedge clk or posedge rst) cnt_random2 <= rst ? 0 : cnt_random2 + 1;
 
-	wire [9:0] rd1, rd2, rd3, rd4, rd5, rd6;
+	wire [7:0] rd1, rd2, rd3, rd4, rd5, rd6;
 	assign rd1 = cnt_random ^ (cnt << 2) | 1;
 	assign rd2 = ~cnt_random | 1;
 	assign rd3 = cnt_random - (value << 1) | 1;
@@ -164,9 +163,6 @@ module count(
 			RD <= 0;
 		end else if(state == INGAME && timer == 0) begin
 			RD <= {rd6, rd5, rd4, rd3, rd2, rd1};
-//			RD <= (cnt_random << 50) | (/*(~cnt_random2)*/ 1 << 40) | ((cnt_random ^ cnt_random2) << 30) | ((cnt_random ^ value) << 20) | ((~cnt_random) << 10) | (value + cnt_random);
-//			RD <= {cnt_random + 1, /*(~cnt_random2) +*/ 10'd1, cnt_random2 + 1, cnt_random - (value << 1) + 1, ~cnt_random + 1, cnt_random ^ (cnt << 2)};
-//			RD <= {10'd1, 10'd2, 10'd3, 10'd4, 10'd5, 10'd6};
 		end else begin
 			RD <= next_RD;
     	end
@@ -175,7 +171,10 @@ module count(
 	always @(*) begin 
 		if(state == INGAME )begin
 			if(cursor && key_num == 28 && key_valid && key_down[last_change] == 1'b1 && !delay /*&& !(key_down & (~(1 << last_change)))*/)begin // space down ?
-				next_RD = {(cnt_random & 10'd255) + 1, RD[59:10]};
+				if(value - num > 6)
+					next_RD = {(cnt_random | 1), RD[47:8]};
+				else 
+					next_RD = {8'd0, RD[47:8]};
 			end else begin
 				next_RD = RD;
 			end
@@ -190,9 +189,9 @@ module count(
 			id <= 0;
     	end else begin
 			if(state == INGAME)begin
-				id <= RD[9:0];
+				id <= RD[7:0];
 			end else begin
-				id <= RD[9 : 0];
+				id <= RD[7:0];
 			end
     	end
     end
@@ -360,7 +359,7 @@ module count(
 			end else begin
 				next_type_total = type_total;
 			end
-		end else begin.
+		end else begin
 			next_type_total = 0;
 		end
 	end*/
@@ -419,7 +418,7 @@ module count(
 	always @(*)begin
 		if(state == INGAME)begin 
 			if(timer && total)begin
-				next_wpm = (1200 * (total_correct + correct)) / timer;
+				next_wpm = ((total_correct + correct) * 1200) / timer;
 			end else begin
 				next_wpm = 0;
 			end
