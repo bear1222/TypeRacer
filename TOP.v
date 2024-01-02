@@ -33,7 +33,7 @@ module TOP(
 	wire [9:0] wpm;
 	wire [9:0] acc;
 	wire [4:0] correct;
-	wire [59:0] RD;
+	wire [47:0] RD;
 	wire finish;
 	wire [4:0] id;//
 	wire [74:0] word;
@@ -102,14 +102,27 @@ module TOP(
 		.percent(percent)
 	);
 
+	record re(
+		.clk(clk),
+		.rst(rst),
+		.mode(Mode),
+		.state(state),
+		.wpm(wpm),
+		.acc(acc),
+		.wpm_best(wpm_best),
+		.wpm_average(wpm_average),
+		.acc_best(acc_best),
+		.acc_average(acc_average)
+	);
+
 	/*dictionary dic(
 		.id(id),
 		.word(word),
 		.wordnum(wordnum)
-	);//
+	);*/
 
-	audio a(
-
+	/*audio a(
+		
 	);*/
 
 	vga v(
