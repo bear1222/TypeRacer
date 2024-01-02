@@ -66,7 +66,7 @@ module count(
 
 	looHz_counter ct (.clk(clk), .clk_div(clk_div));
 
-	assign percent = mode ? ((value * 100 - cnt) / value) : ((num * 100) / value);
+	assign percent = mode ? ((num * 100) / value) : ((value * 100 - cnt) / value);
 
 	/*timer*/always @ (posedge clk_div, posedge rst) begin
     	if (rst) begin
@@ -147,14 +147,25 @@ module count(
 		end
 	end
 
-	reg [9:0] cnt_random;
-	always @ (posedge clk) cnt_random <= cnt_random + 1;
+	reg [9:0] cnt_random, cnt_random2;
+	always @ (posedge clk_div or posedge rst) cnt_random <= rst ? 0 : cnt_random + 1;
+	always @ (posedge clk or posedge rst) cnt_random2 <= rst ? 0 : cnt_random2 + 1;
+
+	wire [9:0] rd1, rd2, rd3, rd4, rd5, rd6;
+	assign rd1 = cnt_random ^ (cnt << 2) | 1;
+	assign rd2 = ~cnt_random | 1;
+	assign rd3 = cnt_random - (value << 1) | 1;
+	assign rd4 = cnt_random2 | 1;
+	assign rd5 = ~cnt_random2 | 1;
+	assign rd6 = cnt_random | 1;
 
 	/*RD*/always @ (posedge clk, posedge rst) begin
     	if (rst) begin
 			RD <= 0;
 		end else if(state == INGAME && timer == 0) begin
-			RD <= {cnt_random + 1, (cnt_random ^ value) + 1, cnt_random + cnt + 1, cnt_random - value + 1, ~cnt_random + 1, cnt_random ^ (cnt << 2)};
+			RD <= {rd6, rd5, rd4, rd3, rd2, rd1};
+//			RD <= (cnt_random << 50) | (/*(~cnt_random2)*/ 1 << 40) | ((cnt_random ^ cnt_random2) << 30) | ((cnt_random ^ value) << 20) | ((~cnt_random) << 10) | (value + cnt_random);
+//			RD <= {cnt_random + 1, /*(~cnt_random2) +*/ 10'd1, cnt_random2 + 1, cnt_random - (value << 1) + 1, ~cnt_random + 1, cnt_random ^ (cnt << 2)};
 //			RD <= {10'd1, 10'd2, 10'd3, 10'd4, 10'd5, 10'd6};
 		end else begin
 			RD <= next_RD;
@@ -172,6 +183,7 @@ module count(
 			next_RD = 0;
 		end
 	end
+
 
 	/*ID*/always @ (posedge clk, posedge rst) begin
     	if (rst) begin
@@ -274,31 +286,6 @@ module count(
 
 	always @(*) begin
 		if(state == INGAME)begin 
-			/*if(cursor)begin
-			    if(cursor >= wordnum)begin
-			        next_correct = correct;
-			    end else begin
-                    next_correct = 0;
-                    begin : loop
-                        for(i = 0; i < cursor; i = i + 1)begin
-                            if(
-                                type[i * 5] == word[i * 5] && 
-                                type[i * 5 + 1] == word[i * 5 + 1] &&
-                                type[i * 5 + 2] == word[i * 5 + 2] && 
-                                type[i * 5 + 3] == word[i * 5 + 3] && 
-                                type[i * 5 + 4] == word[i * 5 + 4]  
-                            )begin
-                                next_correct = next_correct + 1;
-                            end else begin
-                                next_correct = next_correct;
-                                disable loop;
-                            end
-                        end
-                    end
-                end
-			end else begin
-				next_correct = correct;
-			end*/
 			if(key_num == 28 && key_valid && key_down[last_change] == 1'b1 && !delay /*&& !(key_down & (~(1 << last_change)))*/)begin//space 
 				next_correct = 0;
 			end else if(key_num == 27 && key_valid && key_down[last_change] == 1'b1 /*&& !(key_down & (~(1 << last_change)))*/)begin//back
@@ -341,8 +328,16 @@ module count(
 	always @(*) begin
 		if(state == INGAME)begin 
 			if(key_num == 28 && key_valid && key_down[last_change] == 1'b1 && !delay /*&& !(key_down & (~(1 << last_change)))*/)begin//space
-				next_total = total + wordnum;
-			end else begin
+				if(cursor)
+					next_total = total + 1;
+				else
+					next_total = total;
+			end else if(key_num < 27 && key_valid && key_down[last_change] == 1'b1 && !delay /*&& !(key_down & (~(1 << last_change)))*/)begin
+				if(cursor < 25)
+					next_total = total + 1;
+				else
+					next_total = total;
+			end	else begin
 				next_total = total;
 			end
 		end else begin
@@ -400,8 +395,8 @@ module count(
 
 	always @(*)begin
 		if(state == INGAME)begin 
-			if((type_total + cursor) > 0)begin
-				next_acc = ((total_correct + correct) * 100) / (type_total + cursor);
+			if(total > 0)begin
+				next_acc = ((total_correct + correct) * 100) / total;
 			end else begin
 				next_acc = 0;
 			end
@@ -420,8 +415,8 @@ module count(
 
 	always @(*)begin
 		if(state == INGAME)begin 
-			if(timer && (type_total + cursor) > 0)begin
-				next_wpm = ((total_correct + correct) / 5) / (timer / 6000);
+			if(timer && total)begin
+				next_wpm = ((total_correct + correct) / 5) / ((timer / 6000) + 1);
 			end else begin
 				next_wpm = 0;
 			end
