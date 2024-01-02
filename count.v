@@ -10,7 +10,7 @@ module count(
 	output reg [14:0] timer,
 	output reg [15:0] nums,
 	output reg [4:0] cursor,
-	output reg [124:0] type,
+	output reg [74:0] type,
 	output reg [9:0] wpm,
 	output reg [9:0] acc,
 	output reg [4:0] correct,
@@ -51,7 +51,7 @@ module count(
 	reg [14:0] cnt, next_cnt;
 	reg [6:0] num, next_num;
 	reg [4:0] typecount;
-	reg [124:0] next_type;
+	reg [74:0] next_type;
 	reg [4:0] next_cursor;
 	reg [4:0] next_correct;
 	reg [4:0] key_num;
@@ -227,7 +227,7 @@ module count(
 				end
 			end else if(key_num < 27 && key_valid && key_down[last_change] == 1'b1 && !delay /*&& !(key_down & (~(1 << last_change)))*/)begin
 				next_type = type;
-				if(cursor < 25)begin
+				if(cursor < 15)begin
 					next_type[cursor * 5] = key_num[0];
 					next_type[cursor * 5 + 1] = key_num[1];
 					next_type[cursor * 5 + 2] = key_num[2];
@@ -261,7 +261,7 @@ module count(
 					next_cursor = cursor;
 				end
 			end else if(key_num < 27 && key_valid && key_down[last_change] == 1'b1 && !delay /*&& !(key_down & (~(1 << last_change)))*/)begin
-				if(cursor < 25)begin
+				if(cursor < 15)begin
 					next_cursor = cursor + 1;
 				end else begin
 					next_cursor = cursor;
@@ -332,7 +332,7 @@ module count(
 				else
 					next_total = total;
 			end else if(key_num < 27 && key_valid && key_down[last_change] == 1'b1 && !delay /*&& !(key_down & (~(1 << last_change)))*/)begin
-				if(cursor < 25)
+				if(cursor < 15)
 					next_total = total + 1;
 				else
 					next_total = total;
@@ -343,26 +343,6 @@ module count(
 			next_total = 0;
 		end
 	end
-
-	/*type_total*//*always @ (posedge clk, posedge rst) begin
-    	if(rst) begin
-			type_total <= 0;
-    	end else begin
-			type_total <= next_type_total;
-    	end
-    end
-
-	always @(*) begin
-		if(state == INGAME)begin 
-			if(key_num == 28 && key_valid && key_down[last_change] == 1'b1 && !delay)begin//space
-				next_type_total = type_total + cursor;
-			end else begin
-				next_type_total = type_total;
-			end
-		end else begin
-			next_type_total = 0;
-		end
-	end*/
 
 	/*total_correct*/always @ (posedge clk, posedge rst) begin
     	if (rst) begin
@@ -402,8 +382,10 @@ module count(
 			end else begin
 				next_acc = 0;
 			end
-		end else begin
+		end else if(state == COUNTDOWN)begin
 			next_acc = 0;
+		end else begin
+			next_acc = acc;
 		end
 	end
 
@@ -422,8 +404,10 @@ module count(
 			end else begin
 				next_wpm = 0;
 			end
-		end else begin
+		end else if(state == COUNTDOWN)begin
 			next_wpm = 0;
+		end else begin
+			next_wpm = wpm;
 		end
 	end
 
