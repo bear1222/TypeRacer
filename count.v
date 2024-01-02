@@ -360,7 +360,7 @@ module count(
 			end else begin
 				next_type_total = type_total;
 			end
-		end else begin
+		end else begin.
 			next_type_total = 0;
 		end
 	end*/
@@ -419,7 +419,7 @@ module count(
 	always @(*)begin
 		if(state == INGAME)begin 
 			if(timer && total)begin
-				next_wpm = ((total_correct + correct) / 5) / ((timer / 6000) + 1);
+				next_wpm = (1200 * (total_correct + correct)) / timer;
 			end else begin
 				next_wpm = 0;
 			end
