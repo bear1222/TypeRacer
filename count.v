@@ -172,7 +172,7 @@ module count(
     	end
     end
 
-	always @(*) begin
+	always @(*) begin 
 		if(state == INGAME )begin
 			if(cursor && key_num == 28 && key_valid && key_down[last_change] == 1'b1 && !delay /*&& !(key_down & (~(1 << last_change)))*/)begin // space down ?
 				next_RD = {(cnt_random & 10'd255) + 1, RD[59:10]};
@@ -345,7 +345,7 @@ module count(
 		end
 	end
 
-	/*type_total*/always @ (posedge clk, posedge rst) begin
+	/*type_total*//*always @ (posedge clk, posedge rst) begin
     	if(rst) begin
 			type_total <= 0;
     	end else begin
@@ -355,7 +355,7 @@ module count(
 
 	always @(*) begin
 		if(state == INGAME)begin 
-			if(key_num == 28 && key_valid && key_down[last_change] == 1'b1 && !delay /*&& !(key_down & (~(1 << last_change)))*/)begin//space
+			if(key_num == 28 && key_valid && key_down[last_change] == 1'b1 && !delay)begin//space
 				next_type_total = type_total + cursor;
 			end else begin
 				next_type_total = type_total;
@@ -363,7 +363,7 @@ module count(
 		end else begin
 			next_type_total = 0;
 		end
-	end
+	end*/
 
 	/*total_correct*/always @ (posedge clk, posedge rst) begin
     	if (rst) begin
@@ -376,7 +376,10 @@ module count(
 	always @(*) begin
 		if(state == INGAME)begin 
 			if(key_num == 28 && key_valid && key_down[last_change] == 1'b1 && !delay /*&& !(key_down & (~(1 << last_change)))*/)begin//space
-				next_total_correct = total_correct + correct;
+				if(cursor == wordnum)
+					next_total_correct = total_correct + correct + 1;
+				else
+					next_total_correct = total_correct + correct;
 			end else begin
 				next_total_correct = total_correct;
 			end
