@@ -33,7 +33,7 @@ module TOP(
 	wire [9:0] wpm;
 	wire [9:0] acc;
 	wire [4:0] correct;
-	wire [59:0] RD;
+	wire [47:0] RD;
 	wire finish;
 	wire [4:0] id;//
 	wire [74:0] word;
@@ -92,7 +92,6 @@ module TOP(
 		.nums(num2),
 		.timer(timer),
 		.cursor(cursor),
-		//.random_id(random_id),
 		.type(type),
 		.wpm(wpm),
 		.acc(acc),
