@@ -106,9 +106,9 @@ module record(
 
   always @(posedge clk) begin
     if(rst)
-      acc_best <= 0;
+      acc_average <= 0;
     else
-      acc_best <= next_acc_average;
+      acc_average <= next_acc_average;
   end
 
   always @(*) begin
