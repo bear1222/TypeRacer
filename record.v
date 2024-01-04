@@ -13,7 +13,7 @@ module record(
 );
 
   reg [9:0] next_wpm_best, next_wpm_average, next_acc_best, next_acc_average;
-  reg [3:0] num, next_num;
+  reg [4:0] num, next_num;
   reg lock, next_lock;
 
   always @(posedge clk , posedge rst)begin
@@ -25,11 +25,7 @@ module record(
 
   always @(*) begin
     if(state == 3)begin
-      if(wpm > wpm_best || acc > acc_best)begin
-        next_lock = 1;
-      end else begin
-        next_lock = lock;
-      end
+      next_lock = 1;
     end else if(state == 2)begin
       next_lock = 0;
     end else begin
@@ -45,13 +41,17 @@ module record(
   end
 
   always @(*) begin
-    if(finish && !lock)
-      next_num = num + 1;
-    else
+    if(state == 3)begin
+      if(!lock)
+        next_num = num + 1;
+      else 
+        next_num = num;
+    end else begin
       next_num = num;
+    end
   end
 
-  always @(posedge clk) begin
+  always @(posedge clk , posedge rst) begin
     if(rst)
       wpm_best <= 0;
     else
@@ -70,7 +70,7 @@ module record(
     end
   end
 
-  always @(posedge clk) begin
+  always @(posedge clk , posedge rst) begin
     if(rst)
       wpm_average <= 0;
     else
@@ -79,13 +79,13 @@ module record(
 
   always @(*) begin
     if(state == 3 && !lock)begin
-      next_wpm_average = (wpm_average * ( num - 1 ) + wpm) / num;
+      next_wpm_average = (wpm_average * num  + wpm) / (num + 1);
     end else begin
       next_wpm_average = wpm_average;
     end
   end
   
-  always @(posedge clk) begin
+  always @(posedge clk , posedge rst) begin
     if(rst)
       acc_best <= 0;
     else
@@ -104,7 +104,7 @@ module record(
     end
   end
 
-  always @(posedge clk) begin
+  always @(posedge clk , posedge rst) begin
     if(rst)
       acc_average <= 0;
     else
@@ -113,7 +113,7 @@ module record(
 
   always @(*) begin
     if(state == 3 && !lock)begin
-      next_acc_average = (acc_average * ( num - 1 ) + acc) / num;
+      next_acc_average = (acc_average * num + acc) / (num + 1);
     end else begin
       next_acc_average = acc_average;
     end
