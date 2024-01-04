@@ -9,7 +9,8 @@ module control(
 	input mode,//sw0
 	input finish,
 	output reg Mode,
-	output [4:0] vol,
+	output reg [15:0] LED,
+	output reg [4:0] vol,
 	output wire [6:0] value,
 	output reg [1:0] state,
 	output reg [15:0] nums
@@ -18,6 +19,9 @@ module control(
 	reg [6:0] Num, Time, next_Num, next_Time;
 	reg [1:0] next_state;
 	reg next_Mode;
+	reg [4:0] next_vol;
+	reg [4:0] volume, next_volume;
+	reg [15:0] next_led;
 	wire clk_div;
 	parameter SELECT = 0;
 	parameter COUNTDOWN = 1;
@@ -25,6 +29,80 @@ module control(
 	parameter FINISH = 3;
 
 	loHz_counter ct (.clk(clk), .clk_div(clk_div));
+
+	always @(posedge clk, posedge rst) begin
+		if (rst) begin
+    		volume <= 3;
+    	end else begin
+			volume <= next_volume;
+    	end
+	end
+
+	always@(*)begin
+		if(vol_UP)begin
+			next_volume = (volume == 5) ? 5 : volume + 1;
+		end else if(vol_DOWN) begin
+			next_volume = (volume == 0) ? 0 : volume - 1;
+		end
+	end
+
+	always @(posedge clk, posedge rst) begin
+		if (rst) begin
+    		vol <= 7;
+    	end else begin
+			vol <= next_vol;
+    	end
+	end
+
+	always@(*)begin
+		case(volume)
+			0:next_vol = 0;
+			1:next_vol = 1;
+			2:next_vol = 3;
+			3:next_vol = 7;
+			4:next_vol = 15;
+			5:next_vol = 31;
+			default:next_vol = vol;
+		endcase
+	end
+
+	always @(posedge clk, posedge rst) begin
+		if (rst) begin
+    		LED <= 7;
+    	end else begin
+			LED <= next_led;
+    	end
+	end
+
+	always @(*) begin
+		next_led = LED;
+		case(volume)
+			0: next_led[4:0] = 0;
+			1: next_led[4:0] = 16;
+			2: next_led[4:0] = 24;
+			3: next_led[4:0] = 28;
+			4: next_led[4:0] = 30;
+			5: next_led[4:0] = 31;
+			default : next_led[4:0] = LED[4:0];
+		endcase
+		next_led[6:5] = 0;
+		if(state == SELECT)begin
+			next_led[15:7] = 9'b000000000;
+		end else if(state == COUNTDOWN)begin
+			if(cnt > 20)
+				next_led[15:7] = 9'b111111111;
+			else if(cnt > 10)
+				next_led[15:7] = 9'b111111000;
+			else
+				next_led[15:7] = 9'b111000000;
+		end else if(state == INGAME)begin
+			next_led[15:7] = 9'b000000000;
+		end else if(state == FINISH)begin
+			next_led[15:7] = 9'b111111111;
+		end else begin
+			next_led[15:7] = LED[15:7];
+		end
+	end
 
 	always @ (posedge clk_div, posedge rst) begin
     	if (rst) begin

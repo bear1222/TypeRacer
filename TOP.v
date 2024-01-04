@@ -9,7 +9,7 @@ module TOP(
 	input mode,//sw0
 	inout PS2_DATA,   // Keyboard I/O
     inout PS2_CLK,    // Keyboard I/O
-    output reg [15:0] LED,       // LED: [15:9] key & [4:0] volume
+    output wire [15:0] LED,       // LED: [15:9] key & [4:0] volume
     output audio_mclk, // master clock
     output audio_lrck, // left-right clock
     output audio_sck,  // serial clock
@@ -58,7 +58,7 @@ module TOP(
 	debounce de_vol_DOW (.clk(clk), .pb(vol_DOWN), .pb_debounced(vol_DOWN_de));
     one_pulse one_vol_DOWN (.clk(clk), .pb_in(vol_DOWN_de), .pb_out(vol_DOWN_1));
 
-	SevenSegment seven(.clk(clk), .rst(rst), .nums(nums), .digit(DIGIT), .display(DISPLAY));
+	SevenSegment seven(.clk(clk), .rst(rst), .nums(num1), .digit(DIGIT), .display(DISPLAY));
 	wire [3:0] a, b, c, d;
 	assign a = wpm_average / 1000;
 	assign b = wpm_average / 100 % 10;
@@ -81,6 +81,7 @@ module TOP(
 		.mode(mode),
 		.finish(finish),
 		.Mode(Mode),
+		.LED(LED),
 		.value(value),
 		.state(state),
 		.vol(vol),
@@ -164,14 +165,4 @@ module TOP(
 		.hsync(hsync), 
 		.vsync(vsync)
 	);
-	
-    always@(*)begin
-        case(state)
-            0:LED = 1;
-            1:LED = 2;
-            2:LED = 4;
-            3:LED = 8;
-            default:LED = 0;
-        endcase
-     end
 endmodule
