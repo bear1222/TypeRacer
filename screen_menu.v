@@ -1,5 +1,5 @@
-`define titlex 80
-`define titley 100
+`define titlex 30
+`define titley 30
 
 `define bestline 40
 `define bestaccline 60
@@ -9,9 +9,10 @@
 `define avewpmline 160
 `define ystart 510
 
-`define selectline 250
-`define twline 300
-`define selecty 200
+// 150, x is good
+`define selectline 120
+`define twline 150
+`define selecty 90
 
 module menu_screen(
     input clk, 
@@ -20,10 +21,10 @@ module menu_screen(
     input valid, 
     input mode, 
     input [6:0] value, 
-    output [9:0] wpm_best,
-    output [9:0] wpm_average,
-    output [9:0] acc_best,
-    output [9:0] acc_average, 
+    input [9:0] wpm_best,
+    input [9:0] wpm_average,
+    input [9:0] acc_best,
+    input [9:0] acc_average, 
     output reg [11:0] pixel
 );
 
@@ -33,7 +34,7 @@ module menu_screen(
         .clk_div(clk_25MHz)
     );
 
-    wire [2:0] pixel_title, pixel_id, pixel_id1, pixel_id2;
+    wire [2:0] pixel_title, pixel_id, pixel_id1, pixel_id2, pixel_small, pixel_big;
     wire [2:0] pixel_best_text, pixel_bestacc_text, pixel_bestacc, pixel_bestwpm_text, pixel_bestwpm, pixel_bestmod;
     wire [2:0] pixel_ave_text, pixel_aveacc_text, pixel_aveacc, pixel_avewpm_text, pixel_avewpm, pixel_avemod;
     wire [2:0] pixel_select_text, pixel_mode_text, pixel_tw, pixel_num;
@@ -41,8 +42,8 @@ module menu_screen(
     text_display title(
         .clk(clk), 
         .valid(valid), 
-        .vgax(vgax >> 1), 
-        .vgay(vgay >> 1), 
+        .vgax(vgax >> 2), 
+        .vgay(vgay >> 2), 
         .sx(`titlex), 
         .ex(`titlex + 16),
         .sy(`titley), 
@@ -177,10 +178,11 @@ module menu_screen(
         .pixel(pixel_avewpm)
     );
 
+    // select mode
     text_display selecttext(
         .clk(clk), 
         .valid(valid), 
-        .vgax(vgax), .vgay (vgay), 
+        .vgax(vgax >> 1), .vgay (vgay >> 1), 
         .sx(`selectline), .ex(`selectline + 16), 
         .sy(`selecty), .ey(`selecty + 8 * 7), 
         .text({5'd20, 5'd3, 5'd5, 5'd12, 5'd5, 5'd19}),
@@ -190,32 +192,52 @@ module menu_screen(
     text_display modetext(
         .clk(clk), 
         .valid(valid), 
-        .vgax(vgax), .vgay (vgay), 
+        .vgax(vgax >> 1), .vgay (vgay >> 1), 
         .sx(`selectline), .ex(`selectline + 16), 
         .sy(`selecty + 8 * 7), .ey(`selecty + 8 * 11), 
         .text({5'd5, 5'd4, 5'd15, 5'd13}), 
         .font_color(4), .background_color(0), 
         .pixel(pixel_mode_text)
     );
+    ascii_display smaller_display(
+        .clk(clk), 
+        .valid(valid), 
+        .vgax(vgax >> 1), .vgay (vgay >> 1), 
+        .sx(`twline), .ex(`twline + 16), 
+        .sy(`selecty + 6), .ey(`selecty + 8 + 6), 
+        .ascii(6'h3c), 
+        .font_color(4), .background_color(0), 
+        .pixel(pixel_small)
+    );
     text_display twtext(
         .clk(clk), 
         .valid(valid), 
-        .vgax(vgax), .vgay (vgay), 
+        .vgax(vgax >> 1), .vgay (vgay >> 1), 
         .sx(`twline), .ex(`twline + 16), 
-        .sy(`selecty), .ey(`selecty + 8 * 5), 
-        .text(mode ? {5'd4, 5'd18, 5'd15, 5'd23} : {5'd3, 5'd13, 5'd9, 5'd20}), // mode ? "word" : "time"
+        .sy(`selecty + 8 + 6), .ey(`selecty + 8 * 6 + 6), 
+        .text(mode ? {5'd4, 5'd18, 5'd15, 5'd23} : {5'd5, 5'd13, 5'd9, 5'd20}), // mode ? "word" : "time"
         .font_color(4), .background_color(0), 
         .pixel(pixel_tw)
     );
     num_display numdisplay(
         .clk(clk), 
         .valid(valid), 
-        .vgax(vgax), .vgay (vgay), 
+        .vgax(vgax >> 1), .vgay (vgay >> 1), 
         .sx(`twline), .ex(`twline + 16), 
-        .sy(`selecty + 8 * 5), .ey(`selecty + 8 * 8), 
+        .sy(`selecty + 6 + 8 * 6), .ey(`selecty + 6 + 8 * 9), 
         .num(value), .dot(0), 
         .font_color(4), .background_color(0), 
         .pixel(pixel_num)
+    );
+    ascii_display biger_display(
+        .clk(clk), 
+        .valid(valid), 
+        .vgax(vgax >> 1), .vgay (vgay >> 1), 
+        .sx(`twline), .ex(`twline + 16), 
+        .sy(`selecty + 6 + 8 * 9), .ey(`selecty + 8 * 10 + 6), 
+        .ascii(6'h3e), 
+        .font_color(4), .background_color(0), 
+        .pixel(pixel_big)
     );
 
     find_max fm1(
@@ -244,8 +266,8 @@ module menu_screen(
         .a1(pixel_id2), 
         .a2(pixel_tw), 
         .a3(pixel_num), 
-        .a4(0), 
-        .a5(0), 
+        .a4(pixel_small), 
+        .a5(pixel_big), 
         .a6(0), 
         .a7(0), 
         .a8(0), 

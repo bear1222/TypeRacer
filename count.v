@@ -158,12 +158,18 @@ module count(
 	assign rd5 = ~cnt_random2 | 1;
 	assign rd6 = cnt_random | 1;
 
+	reg lockrd;
+
 	/*RD*/always @ (posedge clk, posedge rst) begin
     	if (rst) begin
 			RD <= 0;
 		end else if(state == INGAME && timer == 0) begin
-			RD <= {rd6, rd5, rd4, rd3, rd2, rd1};
+			if(!lockrd) begin
+				RD <= {rd6, rd5, rd4, rd3, rd2, rd1};
+				lockrd <= 1;
+			end
 		end else begin
+			lockrd <= 0;
 			RD <= next_RD;
     	end
     end

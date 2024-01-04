@@ -29,7 +29,7 @@ module TOP(
 	wire [15:0] nums, num1, num2;
 	wire [9:0] random_id;
 	wire [4:0] cursor;
-	wire [124:0] type;
+	wire [74:0] type;
 	wire [9:0] wpm;
 	wire [9:0] acc;
 	wire [4:0] correct;
@@ -45,6 +45,7 @@ module TOP(
 	wire [127:0] key_down;
 	wire start_de, start_1, select_UP_de, select_UP_1, select_DOWN_de, select_DOWN_1;
 	wire vol_UP_de, vol_UP_1, vol_DOWN_de, vol_DOWN_1;
+	wire [9:0] wpm_average, wpm_best, acc_average, acc_best;
 
 	debounce de_start (.clk(clk), .pb(start), .pb_debounced(start_de));
     one_pulse one_start (.clk(clk), .pb_in(start_de), .pb_out(start_1));
@@ -58,7 +59,13 @@ module TOP(
     one_pulse one_vol_DOWN (.clk(clk), .pb_in(vol_DOWN_de), .pb_out(vol_DOWN_1));
 
 	SevenSegment seven(.clk(clk), .rst(rst), .nums(nums), .digit(DIGIT), .display(DISPLAY));
-	assign nums = (state == 2) ? num2 : num1;
+	wire [3:0] a, b, c, d;
+	assign a = wpm_average / 1000;
+	assign b = wpm_average / 100 % 10;
+	assign c = wpm_average / 10 % 10;
+	assign d = wpm_average % 10;
+//	assign nums = (state == 2) ? num2 : num1;
+	assign nums = (state == 2) ? {a, b, c, d} : num1;
 
 	KeyboardDecoder keyde (.clk(clk), .rst(rst), .PS2_CLK(PS2_CLK), .PS2_DATA(PS2_DATA),
 	 .key_valid(key_valid),.key_down(key_down),.last_change(last_change));
@@ -108,6 +115,7 @@ module TOP(
 		.state(state),
 		.wpm(wpm),
 		.acc(acc),
+		.finish(finish), 
 		.wpm_best(wpm_best),
 		.wpm_average(wpm_average),
 		.acc_best(acc_best),
@@ -120,9 +128,17 @@ module TOP(
 		.wordnum(wordnum)
 	);*/
 
-	/*audio a(
-		
-	);*/
+	audio au(
+		.clk(clk), 
+		.rst(rst),
+		.vol(vol), 
+		.state(state), 
+
+		.audio_mclk(audio_mclk), 
+   		.audio_lrck(audio_lrck), // left-right clock
+   		.audio_sck(audio_sck),  // serial clock
+   		.audio_sdin(audio_sdin)
+	);
 
 	vga v(
 		.clk(clk), 
@@ -135,6 +151,13 @@ module TOP(
 		.times(timer), 
 		.type(type), 
 		.rd(RD), 
+		.mode(Mode),
+		.value(value),
+		.state(state),
+		.wpm_best(wpm_best),
+		.wpm_average(wpm_average),
+		.acc_best(acc_best),
+		.acc_average(acc_average),
 		.vgaRed(vgaRed), 
 		.vgaGreen(vgaGreen), 
 		.vgaBlue(vgaBlue), 

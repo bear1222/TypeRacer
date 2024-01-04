@@ -31,12 +31,8 @@ endmodule
 module audio(
     input clk,
     input rst,        // BTNC: active high reset
-    input _play,      // SW0: Play/Pause
-    input _start,     // SW1: Start/Exit
-    input _mute,      // SW14: Mute
-    input _mode,      // SW15: Mode
-    input _volUP,     // BTNU: Vol up
-    input _volDOWN,   // BTND: Vol down
+    input [1:0] state, 
+    input [4:0] vol, 
     output audio_mclk, // master clock
     output audio_lrck, // left-right clock
     output audio_sck,  // serial clock
@@ -45,15 +41,11 @@ module audio(
 
     wire [15:0] audio_in_left, audio_in_right;
 
-    wire [11:0] ibeatNum, ex_ibeat;               // Beat counter
     wire [31:0] freqL, freqR;           // Raw frequency, produced by music module
     wire [21:0] freq_outL, freq_outR;    // Processed frequency, adapted to the clock rate of Basys3
-    wire [4:0] vol;
-    reg [4:0] volume = 5'b00111, next_volume;
     reg [15:0] next_led;
     reg [3:0] key;
     reg [19:0] value;
-    reg [31:0] freql, freqr, next_freql, next_freqr;
     reg [6:0] score, next_score;
     wire [31:0] exampleR, exampleL;
     wire ending;
@@ -68,44 +60,56 @@ module audio(
     clock_divider #(.n(22)) clock_22(.clk(clk), .clk_div(clkDiv22));    // for audio
     clock_divider #(.n(20)) clock_24(.clk(clk), .clk_div(clkDiv20));    // for audio
     
+    reg [31:0] cnts, cnt2, cnt3;
+    wire clkDiv;
+    always @ (posedge clk or posedge rst) begin
+        if(rst) cnts <= 0;
+        else if(state == 1 && cnts < 30'd100000000) cnts <= cnts + 1;
+        else cnts <= 0;
+    end
+    always @ (posedge clk) begin
+        if(state == 1) cnt2 <= 0;
+        else if(cnt2 < 170000000) cnt2 <= cnt2 + 1;
+        else cnt2 <= 170000000;
+    end
+    always @ (posedge clk or posedge rst) begin
+        if(rst) cnt3 <= 0;
+        else if(state == 2 && cnt2 == 170000000 && cnt3 < 25'd3700000) cnt3 <= cnt3 + 1;
+        else cnt3 <= 0;
+    end
+//    clock_divider #(.n(22)) clock_div(.clk(clk), .clk_div(clkDiv));    // for audio
+    assign clkDiv = (cnt3 == 25'd3700000);
+
 
     // Player Control
     // [in]  reset, clock, _play, _slow, _music, and _mode
     // [out] beat number
-    player_control #(.LEN(511)) playerCtrl_00 ( 
-        .clk(clkDiv22),
-        .reset(rst),
-        ._play(_play), 
-        ._mode(_mode),
+    wire [11:0] ibeatNum, ibeatNumct;               // Beat counter
+    wire [31:0] freql, freqr, ctL, ctR;
+    player_control #(.LEN(527)) playerCtrl_00 ( 
+        .clk(clkDiv),
+        .reset(rst || state == 1),
+        .en(state == 2 && cnt2 == 170000000), 
         .ibeat(ibeatNum)
+    );
+
+    music_example music_00 (
+        .ibeatNum(ibeatNum),
+        .en(1),
+        .toneL(freqL),
+        .toneR(freqR)
     );
 
     // Music module
     // [in]  beat number and en
     // [out] left & right raw frequency
 
-    example music (
-        .clk(clkDiv22),
-        .reset(rst),
-        ._start(_start), 
-        ._mode(_mode),
-        .ending(ending),
-        .toneL(exampleL),
-        .toneR(exampleR),
-        .ibeat(ex_ibeat)
-    );
-    
-    music_example music_00 (
-        .ibeatNum(ibeatNum),
-        .en(_play),
-        .toneL(freqL),
-        .toneR(freqR)
-    );
-    
     // freq_outL, freq_outR
     // Note gen makes no sound, if freq_out = 50000000 / `silence = 1
-    assign freq_outL = (_mode) ? 50000000 / freqL : 50000000 / freql;
-    assign freq_outR = (_mode) ? 50000000 / freqR : 50000000 / freqr;
+    assign freql = (state == 1 ? (cnts > 90000000 ? `sil : 524) : (state == 2 ? (cnt2 < 150000000 ? 1046 : (cnt2 < 170000000 ? `sil : freqL)) : `sil));
+    assign freqr = (state == 1 ? (cnts > 90000000 ? `sil : 524) : (state == 2 ? (cnt2 < 150000000 ? 1046 : (cnt2 < 170000000 ? `sil : freqR)) : `sil));
+    assign freq_outL = 50000000 / freql;
+    assign freq_outR = 50000000 / freqr;
 
     // Note generation
     // [in]  processed frequency
@@ -132,26 +136,5 @@ module audio(
         .audio_sdin(audio_sdin)             // serial audio data input
     );
 
-    assign vol = (_mute) ? 0 : volume;
-
-    always @(posedge clkDiv20 or posedge rst_1) begin
-        if(rst_1) volume <= 5'b00111;
-        else volume <= next_volume;
-    end
-
-    always @(*) begin
-        if(!_mute)begin
-            if(volDOWN_1)begin
-                if(volume > 5'd1) next_volume = volume >> 1;
-                else next_volume = 5'd1;
-            end else if(volUP_1)begin
-                if(volume < 5'b11111) next_volume = (volume << 1) + 1;
-                else next_volume = 5'b11111;
-            end else begin
-                next_volume = volume;
-            end
-        end
-        
-    end
 endmodule
 
