@@ -43,6 +43,8 @@ module control(
 			next_volume = (volume == 5) ? 5 : volume + 1;
 		end else if(vol_DOWN) begin
 			next_volume = (volume == 0) ? 0 : volume - 1;
+		end else begin
+			next_volume = volume;
 		end
 	end
 
@@ -235,7 +237,7 @@ module control(
 				nums[11:8] = Num / 100;
 				nums[15:12] = 11;//
 			end
-		end else if(state == INGAME)begin
+		end /*else if(state == INGAME)begin
 			if(!Mode)begin
 				nums[3:0] = Time % 10;
 				nums[7:4] = (Time / 10) % 10; 
@@ -247,7 +249,7 @@ module control(
 				nums[11:8] = Num / 100;
 				nums[15:12] = 0;//
 			end
-		end else begin
+		end*/ else begin
 			nums[3:0] = 12;
 			nums[7:4] = 12; 
 			nums[11:8] = 12;
